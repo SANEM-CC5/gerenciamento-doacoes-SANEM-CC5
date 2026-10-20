@@ -1,87 +1,91 @@
--- ==========================================
--- 1. LIMPEZA PRÉVIA
--- ==========================================
-TRUNCATE TABLE itens_retirada, retiradas, itens_doacao, doacoes, itens, categorias, cartoes_virtuais, beneficiarios, doadores, usuarios RESTART IDENTITY CASCADE;
+-- =====================================================================
+-- DML - Seed alinhado ao esquema real (MySQL 8.0)
+-- Usa os nomes de tabelas/colunas efetivamente implementados.
+-- Seed executável equivalente: db/script-insert-values.sql
+-- =====================================================================
+USE sanem;
 
 -- ==========================================
--- 2. USUÁRIOS DO SISTEMA
+-- 1. PERFIS E USUÁRIOS
 -- ==========================================
-INSERT INTO usuarios (id, cpf, nome, data_nascimento, email, senha_hash, perfil, ativo, data_criacao) VALUES
-('11111111-1111-1111-1111-111111111111', '12345678901', 'Carlos Silva (Gestor)', '1985-04-12', 'carlos.admin@sanem.org', '$2b$10$ExemploHashSeguroAqui123', 'ADMINISTRADOR', true, '2026-01-10 08:00:00'),
-('22222222-2222-2222-2222-222222222222', '10987654321', 'Ana Souza (Triagem)', '1992-08-25', 'ana.func@sanem.org', '$2b$10$ExemploHashSeguroAqui456', 'FUNCIONARIO', true, '2026-01-15 09:30:00');
+INSERT INTO profile (profile_id, name, description) VALUES
+    (1, 'ADMINISTRATOR', 'Administrador do sistema'),
+    (2, 'EMPLOYEE', 'Funcionário / atendente');
+
+INSERT INTO app_user (user_id, name, login, email, password_hash, status, profile_id) VALUES
+    (1, 'Carlos Silva', 'carlos.admin', 'carlos.admin@sanem.org', '$2b$10$ExemploHashSeguroAqui123', 'ACTIVE', 1),
+    (2, 'Ana Souza', 'ana.func', 'ana.func@sanem.org', '$2b$10$ExemploHashSeguroAqui456', 'ACTIVE', 2);
 
 -- ==========================================
--- 3. DOADORES RECORRENTES
+-- 2. BENEFICIÁRIOS (diferentes status, incluindo INACTIVE)
 -- ==========================================
-INSERT INTO doadores (id, cpf, nome, data_nascimento) VALUES
-('33333333-3333-3333-3333-333333333333', '99988877766', 'Confecções Paraná Ltda', '2010-05-20'),
-('44444444-4444-4444-4444-444444444444', '55544433322', 'Mariana Oliveira', '1988-11-30');
-
--- ==========================================
--- 4. BENEFICIÁRIOS (Fluxos de Status Diferentes)
--- ==========================================
-INSERT INTO beneficiarios (id, cpf, nome, data_nascimento, sexo, contato, endereco, composicao_familiar, situacao_vulnerabilidade, status, limite_mensal_itens, usuario_aprovacao_id, data_cadastro) VALUES
--- Beneficiário 1: Aprovado e com limite padrão (10)
-('55555555-5555-5555-5555-555555555555', '11122233344', 'Roberto Mendes', '1975-02-15', 'Masculino', '(45) 99999-1111', 'Rua Argentina, 123, Centro, Medianeira - PR', 4, 'Desempregado há 6 meses, moradia alugada.', 'APROVADO', 10, '11111111-1111-1111-1111-111111111111', '2026-03-20 10:00:00'),
-
--- Beneficiário 2: Aprovado, família grande, limite estendido (15)
-('66666666-6666-6666-6666-666666666666', '22233344455', 'Juliana Castro', '1990-07-08', 'Feminino', '(45) 98888-2222', 'Av. das Cataratas, 456, Santa Terezinha de Itaipu - PR', 6, 'Mãe solo de 5 filhos, trabalho informal com baixa renda.', 'APROVADO', 15, '11111111-1111-1111-1111-111111111111', '2026-03-25 14:15:00'),
-
--- Beneficiário 3: Ainda em análise, sem usuário de aprovação
-('77777777-7777-7777-7777-777777777777', '33344455566', 'Fernando Gomes', '1982-12-01', 'Masculino', '(45) 97777-3333', 'Rua Iguaçu, 789, Bairro Nazaré, Medianeira - PR', 2, 'Doença crônica na família dificultando o trabalho.', 'EM_ANALISE', 10, NULL, '2026-04-01 09:00:00');
+INSERT INTO beneficiary (beneficiary_id, full_name, cpf, phone, socioeconomic_data, beneficiary_status, approver_user_id, withdrawal_limit) VALUES
+    (1, 'Roberto Mendes', '11122233344', '45999991111', 'Desempregado há 6 meses, moradia alugada.', 'APPROVED', 1, 10),
+    (2, 'Juliana Castro', '22233344455', '45988882222', 'Mãe solo de 5 filhos, trabalho informal.', 'APPROVED', 1, 15),
+    (3, 'Fernando Gomes', '33344455566', '45977773333', 'Doença crônica na família.', 'PENDING', NULL, 10),
+    (4, 'Marcos Antunes', '44455566677', '45966664444', 'Cadastro bloqueado por descumprimento das regras.', 'INACTIVE', 1, 10);
 
 -- ==========================================
--- 5. CARTÕES VIRTUAIS (Apenas para os aprovados)
+-- 3. CARTÕES (beneficiários aprovados)
 -- ==========================================
-INSERT INTO cartoes_virtuais (id, beneficiario_id, codigo_cartao, data_emissao, ativo) VALUES
-('88888888-8888-8888-8888-888888888888', '55555555-5555-5555-5555-555555555555', 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa', '2026-03-21 08:00:00', true),
-('99999999-9999-9999-9999-999999999999', '66666666-6666-6666-6666-666666666666', 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb', '2026-03-26 08:00:00', true);
-
--- ==========================================
--- 6. CATEGORIAS E CATÁLOGO DE ITENS (ESTOQUE ATUAL)
--- ==========================================
-INSERT INTO categorias (id, nome) VALUES
-(1, 'Roupas'), 
-(2, 'Calçados'), 
-(3, 'Utensílios Domésticos'), 
-(4, 'Cama, Mesa e Banho');
-
-INSERT INTO itens (id, categoria_id, tipo, genero, tamanho, descricao, quantidade_disponivel) VALUES
-(1, 1, 'Camiseta Básica', 'UNISSEX', 'M', 'Camiseta de algodão sem estampa', 15),
-(2, 1, 'Calça Jeans', 'MASCULINO', '42', 'Calça jeans tradicional em bom estado', 5),
-(3, 2, 'Tênis Esportivo', 'INFANTIL', '32', 'Tênis para uso escolar', 0), -- Zerado no momento
-(4, 3, 'Prato Fundo', 'NAO_APLICAVEL', 'Único', 'Prato de vidro transparente', 24),
-(5, 4, 'Cobertor', 'UNISSEX', 'Casal', 'Cobertor grosso de inverno', 8);
+INSERT INTO card (card_id, unique_number, beneficiary_id, issue_date) VALUES
+    (1, 'CARD-0001', 1, '2026-03-21 08:00:00'),
+    (2, 'CARD-0002', 2, '2026-03-26 08:00:00');
 
 -- ==========================================
--- 7. DOAÇÕES RECEBIDAS E TRIAGEM
+-- 4. CATEGORIAS E ITENS (ESTOQUE)
 -- ==========================================
-INSERT INTO doacoes (id, doador_id, usuario_recebedor_id, data_recebimento) VALUES
-(1, '33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '2026-03-28 10:00:00'),
-(2, '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', '2026-04-01 14:30:00');
+INSERT INTO category (category_id, name) VALUES
+    (1, 'Roupas'), (2, 'Calçados'), (3, 'Utensílios Domésticos'), (4, 'Cama, Mesa e Banho');
 
-INSERT INTO itens_doacao (id, doacao_id, item_id, quantidade, status, usuario_triador_id, data_triagem) VALUES
--- Doação 1 (Confecções Paraná) foi toda triada e disponibilizada
-(1, 1, 1, 20, 'DISPONIBILIZADO', '11111111-1111-1111-1111-111111111111', '2026-03-29 09:00:00'),
-(2, 1, 2, 5, 'DISPONIBILIZADO', '11111111-1111-1111-1111-111111111111', '2026-03-29 09:15:00'),
-
--- Doação 2 (Mariana) tem itens disponibilizados, recusados e parados
-(3, 2, 4, 30, 'DISPONIBILIZADO', '22222222-2222-2222-2222-222222222222', '2026-04-02 10:00:00'),
-(4, 2, 3, 2, 'AGUARDANDO_TRIAGEM', NULL, NULL), -- Ainda não foi pro estoque
-(5, 2, 1, 3, 'INADEQUADO', '22222222-2222-2222-2222-222222222222', '2026-04-02 10:30:00'); -- Camisetas vieram rasgadas
+INSERT INTO item (item_id, description, stock_quantity, tag_code) VALUES
+    (1, 'Camiseta Básica M', 15, 'ITEM-0001'),
+    (2, 'Calça Jeans 42', 5, 'ITEM-0002'),
+    (3, 'Tênis Esportivo Infantil 32', 0, 'ITEM-0003'),
+    (4, 'Prato Fundo de Vidro', 24, 'ITEM-0004'),
+    (5, 'Cobertor Casal', 8, 'ITEM-0005');
 
 -- ==========================================
--- 8. RETIRADAS DE BENEFICIÁRIOS
+-- 5. DOADORES E DOAÇÕES
 -- ==========================================
-INSERT INTO retiradas (id, cartao_id, usuario_registrador_id, data_retirada) VALUES
-(1, '88888888-8888-8888-8888-888888888888', '22222222-2222-2222-2222-222222222222', '2026-04-03 11:00:00'), -- Roberto
-(2, '99999999-9999-9999-9999-999999999999', '22222222-2222-2222-2222-222222222222', '2026-04-04 13:45:00'); -- Juliana
+INSERT INTO donor (donor_id, name, cpf_cnpj, contact, email) VALUES
+    (1, 'Confecções Paraná Ltda', '99988877000199', '4535551234', 'contato@confeccoespr.com'),
+    (2, 'Mariana Oliveira', '55544433322', '45999990000', 'mariana.oliveira@email.com');
 
-INSERT INTO itens_retirada (id, retirada_id, item_id, quantidade) VALUES
--- Roberto retirou 3 Camisetas e 6 Pratos (Total: 9 itens, dentro do limite de 10)
-(1, 1, 1, 3), 
-(2, 1, 4, 6), 
+INSERT INTO donation (donation_id, donation_date, receiver_user_id, donor_id) VALUES
+    (1, '2026-03-28 10:00:00', 2, 1),
+    (2, '2026-04-01 14:30:00', 2, 2);
 
--- Juliana retirou 2 Camisetas e 2 Cobertores (Total: 4 itens, dentro do limite de 15)
-(3, 2, 1, 2), 
-(4, 2, 5, 2);
+INSERT INTO item_donated (item_donated_id, donation_id, item_id, quantity) VALUES
+    (1, 1, 1, 20),
+    (2, 1, 2, 5),
+    (3, 2, 4, 30);
+
+-- ==========================================
+-- 6. RETIRADAS
+-- ==========================================
+INSERT INTO withdrawal (withdrawal_id, withdrawal_date, beneficiary_id, attendant_user_id) VALUES
+    (1, '2026-04-03 11:00:00', 1, 2),
+    (2, '2026-04-04 13:45:00', 2, 2);
+
+INSERT INTO item_withdrawn (item_withdrawn_id, withdrawal_id, item_id, quantity) VALUES
+    (1, 1, 1, 3),
+    (2, 1, 4, 6),
+    (3, 2, 1, 2),
+    (4, 2, 5, 2);
+
+-- ==========================================
+-- 7. CONFIGURAÇÃO DE LIMITE
+-- ==========================================
+INSERT INTO withdrawal_limit_config (monthly_item_limit, is_active) VALUES (10, TRUE);
+
+-- ==========================================
+-- 8. PONTOS DE COLETA E SEDES (Medianeira - PR)
+-- ==========================================
+INSERT INTO collection_point
+    (collection_point_id, name, type, street, number, neighborhood, city, state, zip_code, latitude, longitude, operating_hours, phone)
+VALUES
+    (1, 'Sede SANEM', 'ASSISTANCE_ENTITY_HQ', 'Avenida Brasil', '1500', 'Centro', 'Medianeira', 'PR', '85884-000', -25.295100, -54.093900, 'Seg-Sex 08:00-18:00', '4535550001'),
+    (2, 'Ponto de Coleta Supermercado Central', 'PARTNER_COLLECTION_POINT', 'Rua Minas Gerais', '320', 'Centro', 'Medianeira', 'PR', '85884-010', -25.297800, -54.095400, 'Seg-Sab 08:00-20:00', '4535550002'),
+    (3, 'Ponto de Coleta Paróquia São Miguel', 'PARTNER_COLLECTION_POINT', 'Rua Santa Catarina', '745', 'Ipê', 'Medianeira', 'PR', '85887-000', -25.300500, -54.090200, 'Ter e Qui 14:00-17:00', '4535550003'),
+    (4, 'Entidade Assistencial Lar Esperança', 'ASSISTANCE_ENTITY_HQ', 'Rua Paraná', '210', 'Nova Medianeira', 'Medianeira', 'PR', '85887-100', -25.292300, -54.088700, 'Seg-Sex 08:00-17:00', '4535550004');

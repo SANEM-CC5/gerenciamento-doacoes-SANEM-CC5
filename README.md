@@ -13,6 +13,13 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 - Cadastrar, aprovar e consultar o histórico de pessoas e famílias atendidas
 - Emitir cartões de identificação para agilizar o atendimento
 - Controle completo do perfil dos beneficiários
+- Inativar (bloquear) e reativar beneficiários já aprovados sem remover o cadastro (status `INACTIVE`)
+
+#### 📍 Pontos de Coleta e Sedes
+
+- Cadastrar, consultar, editar e inativar pontos de coleta parceiros e sedes de entidades assistenciais em Medianeira
+- Registrar endereço e horário de funcionamento de cada local
+- Visualizar todas as localizações em um mapa interativo (Leaflet + OpenStreetMap)
 
 #### 📦 Controle de Doações e Estoque
 
@@ -55,7 +62,8 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 - **React Hook Form** - Gerenciamento de formulários
 - **React Query** - Gerenciamento de estado do servidor
 - **Axios** - Cliente HTTP
-- **Lucide React** - Ícones
+- **React Icons** - Ícones
+- **Leaflet / React-Leaflet** - Mapa interativo dos pontos de coleta (OpenStreetMap)
 
 ### DevOps
 
@@ -71,27 +79,32 @@ JavaLovers/
 │   │   ├── main/
 │   │   │   ├── java/com/javalovers/
 │   │   │   │   ├── JavaLoversApplication.java
-│   │   │   │   └── config/
-│   │   │   │       └── SecurityConfig.java
+│   │   │   │   ├── common/                 # Config, segurança, utilidades, soft delete
+│   │   │   │   └── core/                   # Módulos de domínio
+│   │   │   │       ├── beneficiary/        # Beneficiários (CRUD + status INACTIVE)
+│   │   │   │       ├── collectionpoint/    # Pontos de coleta e sedes (NOVO)
+│   │   │   │       ├── donor/
+│   │   │   │       └── ...
 │   │   │   └── resources/
-│   │   │       └── application.yml
+│   │   │       ├── application.yml
+│   │   │       └── db/migration/           # Migrations Flyway (V2..V9)
 │   │   └── test/
 │   ├── pom.xml
 │   └── Dockerfile
-├── frontend/                   # Frontend React
+├── frontend/                   # Frontend Next.js (App Router)
 │   ├── public/
-│   │   └── index.html
 │   ├── src/
-│   │   ├── components/
-│   │   │   └── Header.js
-│   │   ├── pages/
-│   │   │   ├── Home.js
-│   │   │   ├── Login.js
-│   │   │   ├── Register.js
-│   │   │   └── Dashboard.js
-│   │   ├── App.js
-│   │   ├── index.js
-│   │   └── index.css
+│   │   ├── app/
+│   │   │   ├── cadastrobeneficiario/       # Beneficiários
+│   │   │   ├── pontoscoleta/               # Pontos de coleta + mapa (NOVO)
+│   │   │   │   ├── lista/                   # Mapa interativo + tabela
+│   │   │   │   ├── editar/[id]/
+│   │   │   │   └── PontoColetaForm.js
+│   │   │   └── components/
+│   │   │       ├── map/CollectionPointsMap.js  # Mapa Leaflet (NOVO)
+│   │   │       └── navegation/
+│   │   ├── services/api.js
+│   │   └── hooks/
 │   ├── package.json
 │   └── Dockerfile
 ├── Banco de Dados/            # Scripts do banco de dados
@@ -215,8 +228,15 @@ spring:
 
 - 🔄 CRUD completo de beneficiários
 - 🔄 Sistema de aprovação de cadastros
+- 🔄 Inativação/reativação de beneficiários aprovados (status `INACTIVE`)
 - 🔄 Geração de cartões de identificação
 - 🔄 Histórico de atendimentos
+
+#### 📍 Pontos de Coleta e Sedes
+
+- 🔄 CRUD de pontos de coleta parceiros e sedes de entidades assistenciais
+- 🔄 Endereço e horário de funcionamento por local
+- 🔄 Mapa interativo (Leaflet + OpenStreetMap) com as localizações
 
 #### 📦 Controle de Estoque
 

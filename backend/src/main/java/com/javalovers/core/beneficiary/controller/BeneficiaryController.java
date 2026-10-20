@@ -114,6 +114,30 @@ public class BeneficiaryController {
         return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
     }
 
+    @PatchMapping("/{id}/inactivate")
+    public ResponseEntity<BeneficiaryDTO> inactivate(@PathVariable Long id, @RequestParam Long approverUserId) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.inactivateBeneficiary(id, approverUserId);
+
+        Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
+        return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    public ResponseEntity<BeneficiaryDTO> reactivate(@PathVariable Long id, @RequestParam Long approverUserId) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.reactivateBeneficiary(id, approverUserId);
+
+        Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
+        return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
+    }
+
     @GetMapping("/{id}/withdrawals")
     public ResponseEntity<List<WithdrawalDTO>> getWithdrawals(@PathVariable Long id) {
         Beneficiary beneficiary = beneficiaryService.getOrNull(id);

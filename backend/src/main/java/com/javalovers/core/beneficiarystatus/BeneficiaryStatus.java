@@ -6,7 +6,8 @@ import jakarta.persistence.Converter;
 public enum BeneficiaryStatus {
     PENDING("PENDING"),
     APPROVED("APPROVED"),
-    REJECTED("REJECTED");
+    REJECTED("REJECTED"),
+    INACTIVE("INACTIVE");
 
     private final String databaseValue;
 
