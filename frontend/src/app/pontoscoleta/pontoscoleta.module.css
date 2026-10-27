@@ -1,0 +1,210 @@
+.containerGeral {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  margin-left: 250px;
+  width: calc(100% - 250px);
+  box-sizing: border-box;
+}
+
+.formWrapper {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 20px 30px;
+  margin-top: 56px;
+  box-sizing: border-box;
+}
+
+.formContainer {
+  background: var(--color-bg-alt);
+  border-radius: 18px;
+  box-shadow: 0 4px 24px 0 rgba(25, 118, 210, 0.08);
+  padding: 40px;
+  max-width: 900px;
+  width: 100%;
+  margin: 20px auto;
+  border: 1.5px solid var(--color-border-light);
+  display: flex;
+  flex-direction: column;
+}
+
+.titulo {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--color-text, #18132b);
+  margin-bottom: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.decoracao {
+  width: 70px;
+  height: 5px;
+  background: var(--color-primary);
+  margin: 0 auto 24px auto;
+  border-radius: 2px;
+}
+
+.formulario {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px 24px;
+  width: 100%;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.formGroupFullWidth {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  grid-column: 1 / -1;
+}
+
+.formulario label {
+  margin-bottom: 2px;
+  font-size: 1rem;
+  color: var(--color-text, #18132b);
+  font-weight: 600;
+}
+
+.formulario input,
+.formulario select,
+.formulario textarea {
+  padding: 12px 14px;
+  font-size: 1rem;
+  color: var(--color-text, #18132b);
+  border: 1.5px solid var(--color-border, #ccc);
+  border-radius: 8px;
+  box-sizing: border-box;
+  width: 100%;
+  background: #fff;
+}
+
+.formulario input:focus,
+.formulario select:focus,
+.formulario textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.hint {
+  font-size: 0.82rem;
+  color: var(--color-text-light, #666);
+  margin-top: 4px;
+}
+
+.mapHelp {
+  grid-column: 1 / -1;
+  background: var(--color-bg-alt, #f0f4f8);
+  border: 1px dashed var(--color-border, #ccc);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 0.85rem;
+  color: var(--color-text-light, #555);
+}
+
+.mapWrapper {
+  grid-column: 1 / -1;
+  width: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  z-index: 0;
+}
+
+.mapPlaceholder {
+  width: 100%;
+  height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-alt, #f0f4f8);
+  border-radius: 8px;
+  color: var(--color-text-light);
+  font-weight: 600;
+}
+
+.separador {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 1.5px;
+  background: var(--color-border-light, #ddd);
+  border: none;
+  margin: 12px 0 4px 0;
+}
+
+.actions {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.submitButton {
+  font-size: 1.1rem;
+  padding: 14px 40px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.submitButton:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+  transform: translateY(-1px);
+}
+
+.submitButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cancelButton {
+  font-size: 1.1rem;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancelButton:hover {
+  background: var(--color-bg);
+}
+
+.inputError {
+  border-color: var(--color-error, #c0392b) !important;
+  border-width: 2px !important;
+}
+
+.fieldError {
+  color: var(--color-error, #c0392b);
+  font-size: 0.85rem;
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .containerGeral {
+    margin-left: 0;
+    width: 100%;
+  }
+  .formulario {
+    grid-template-columns: 1fr;
+  }
+}

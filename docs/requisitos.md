@@ -12,7 +12,8 @@
 | RF08 | O sistema deve gerar relatórios das doações distribuídas em um determinado período, com filtros por categoria e beneficiário |
 | RF09 | O administrador e o Funcionário devem poder classificar as doações disponibilizando ou excluindo itens caso o mesmo seja inadequado para doação (danificados, impróprios) |
 | RF10 | O administrador deve poder consultar e gerar relatório do histórico de retirada de itens, beneficiários atendidos e distribuição por período |
-| RF11 | O administrador deve poder analisar e aprovar ou reprovar solicitações de cadastro de beneficiários, além de poder bloquear cadastros já aprovados anteriormente (alteração de status) |
+| RF11 | O administrador deve poder analisar e aprovar ou reprovar solicitações de cadastro de beneficiários, além de poder inativar (bloquear) e reativar cadastros já aprovados anteriormente, alterando o status para INACTIVE sem remover o cadastro |
+| RF12 | O sistema deve permitir cadastrar, consultar, editar e inativar (exclusão lógica) pontos de coleta parceiros e sedes de entidades assistenciais em Medianeira, incluindo endereço e horário de funcionamento, e apresentar suas localizações em um mapa interativo |
 
 ---
 

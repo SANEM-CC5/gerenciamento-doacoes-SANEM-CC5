@@ -356,6 +356,51 @@ class ApiService {
         })
     }
 
+    async inactivateBeneficiary(id, approverUserId) {
+        return this.request(
+            `/beneficiary/${id}/inactivate?approverUserId=${approverUserId}`,
+            { method: "PATCH" }
+        )
+    }
+
+    async reactivateBeneficiary(id, approverUserId) {
+        return this.request(
+            `/beneficiary/${id}/reactivate?approverUserId=${approverUserId}`,
+            { method: "PATCH" }
+        )
+    }
+
+    // Métodos para Pontos de Coleta
+    async getCollectionPoints(filters = {}) {
+        const queryParams = new URLSearchParams(filters).toString()
+        const endpoint = `/collection-point/all${queryParams ? `?${queryParams}` : ""}`
+        return this.request(endpoint)
+    }
+
+    async getCollectionPoint(id) {
+        return this.request(`/collection-point/${id}`)
+    }
+
+    async createCollectionPoint(collectionPointData) {
+        return this.request("/collection-point", {
+            method: "POST",
+            body: JSON.stringify(collectionPointData)
+        })
+    }
+
+    async updateCollectionPoint(id, collectionPointData) {
+        return this.request(`/collection-point/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(collectionPointData)
+        })
+    }
+
+    async deleteCollectionPoint(id) {
+        return this.request(`/collection-point/${id}`, {
+            method: "DELETE"
+        })
+    }
+
     // Métodos para Configuração de Limites de Retirada
     async getWithdrawalLimitConfig() {
         return this.request("/withdrawal-limit-config/active")

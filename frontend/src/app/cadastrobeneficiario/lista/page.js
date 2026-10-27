@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import apiService from "../../../services/api";
 import { mapBeneficiaryFromBackend, mapBeneficiaryToBackend } from "../../../services/dataMapper";
 import { useApiList } from "../../../hooks/useApi";
-import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown, FaBan, FaUndo } from "react-icons/fa";
 import authService from "../../../services/authService";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
@@ -45,7 +45,8 @@ export default function ListaBeneficiarios() {
   const statusOptions = [
     { value: 'PENDING', label: 'Pendente' },
     { value: 'APPROVED', label: 'Aprovado' },
-    { value: 'REJECTED', label: 'Rejeitado' }
+    { value: 'REJECTED', label: 'Rejeitado' },
+    { value: 'INACTIVE', label: 'Inativo' }
   ];
 
   const {
@@ -204,6 +205,37 @@ export default function ListaBeneficiarios() {
     });
   };
 
+  const handleInactivate = async (id) => {
+    setConfirmModal({
+      isOpen: true,
+      action: async () => {
+        setApprovingId(id);
+        try {
+          const user = authService.getUser();
+          if (!user || !user.id) { showNotification("Erro: usuário não autenticado", "error"); return; }
+          await apiService.inactivateBeneficiary(id, user.id);
+          showNotification("Beneficiário inativado com sucesso!", "success");
+          loadDataRaw();
+        } catch (err) { showNotification("Erro ao inativar beneficiário", "error");
+        } finally { setApprovingId(null); }
+      },
+      message: "Tem certeza que deseja inativar este beneficiário? Ele deixará de poder retirar itens, mas o cadastro será mantido.",
+      title: "Confirmar Inativação"
+    });
+  };
+
+  const handleReactivate = async (id) => {
+    setApprovingId(id);
+    try {
+      const user = authService.getUser();
+      if (!user || !user.id) { showNotification("Erro: usuário não autenticado", "error"); return; }
+      await apiService.reactivateBeneficiary(id, user.id);
+      showNotification("Beneficiário reativado com sucesso!", "success");
+      loadDataRaw();
+    } catch (err) { showNotification("Erro ao reativar beneficiário", "error");
+    } finally { setApprovingId(null); }
+  };
+
   const handleConfirm = async () => {
     if (confirmModal.action) await confirmModal.action();
     setConfirmModal({ isOpen: false, action: null, message: "", title: "" });
@@ -350,6 +382,7 @@ export default function ListaBeneficiarios() {
       case "PENDING": return "Pendente";
       case "APPROVED": return "Aprovado";
       case "REJECTED": return "Rejeitado";
+      case "INACTIVE": return "Inativo";
       default: return status || "N/A";
     }
   };
@@ -359,6 +392,7 @@ export default function ListaBeneficiarios() {
       case "PENDING": return styles.statusPending;
       case "APPROVED": return styles.statusApproved;
       case "REJECTED": return styles.statusRejected;
+      case "INACTIVE": return styles.statusInactive;
       default: return "";
     }
   };
@@ -514,6 +548,12 @@ export default function ListaBeneficiarios() {
                             <button className={styles.approveButton} onClick={() => handleApprove(b.id)} disabled={loading || approvingId === b.id} title="Aprovar"><FaCheck /></button>
                             <button className={styles.rejectButton} onClick={() => handleReject(b.id)} disabled={loading || approvingId === b.id} title="Rejeitar"><FaTimes /></button>
                           </>
+                        )}
+                        {isAdmin && b.status === "APPROVED" && (
+                          <button className={styles.rejectButton} onClick={() => handleInactivate(b.id)} disabled={loading || approvingId === b.id} title="Inativar"><FaBan /></button>
+                        )}
+                        {isAdmin && b.status === "INACTIVE" && (
+                          <button className={styles.approveButton} onClick={() => handleReactivate(b.id)} disabled={loading || approvingId === b.id} title="Reativar"><FaUndo /></button>
                         )}
                         <button className={styles.deleteButton} onClick={() => handleDelete(b.id)} disabled={loading} title="Excluir"><FaTrash /></button>
                       </td>

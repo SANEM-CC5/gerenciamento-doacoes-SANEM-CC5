@@ -210,10 +210,32 @@ public class BeneficiaryService {
     public void rejectBeneficiary(Long beneficiaryId, Long approverUserId) {
         Beneficiary beneficiary = getOrThrowException(beneficiaryId);
         AppUser approver = appUserService.getOrThrowException(approverUserId);
-        
+
         beneficiary.setBeneficiaryStatus(BeneficiaryStatus.REJECTED);
         beneficiary.setApproverId(approver);
-        
+
+        beneficiaryRepository.save(beneficiary);
+    }
+
+    @Transactional
+    public void inactivateBeneficiary(Long beneficiaryId, Long approverUserId) {
+        Beneficiary beneficiary = getOrThrowException(beneficiaryId);
+        AppUser approver = appUserService.getOrThrowException(approverUserId);
+
+        beneficiary.setBeneficiaryStatus(BeneficiaryStatus.INACTIVE);
+        beneficiary.setApproverId(approver);
+
+        beneficiaryRepository.save(beneficiary);
+    }
+
+    @Transactional
+    public void reactivateBeneficiary(Long beneficiaryId, Long approverUserId) {
+        Beneficiary beneficiary = getOrThrowException(beneficiaryId);
+        AppUser approver = appUserService.getOrThrowException(approverUserId);
+
+        beneficiary.setBeneficiaryStatus(BeneficiaryStatus.APPROVED);
+        beneficiary.setApproverId(approver);
+
         beneficiaryRepository.save(beneficiary);
     }
 }

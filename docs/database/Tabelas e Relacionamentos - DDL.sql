@@ -1,124 +1,224 @@
--- ==========================================
--- 1. CRIAÇÃO DE TIPOS (ENUMS)
--- ==========================================
-CREATE TYPE perfil_usuario AS ENUM ('ADMINISTRADOR', 'FUNCIONARIO');
-CREATE TYPE status_beneficiario AS ENUM ('EM_ANALISE', 'APROVADO', 'REPROVADO', 'BLOQUEADO');
-CREATE TYPE status_item_doacao AS ENUM ('AGUARDANDO_TRIAGEM', 'DISPONIBILIZADO', 'INADEQUADO');
-CREATE TYPE genero_item AS ENUM ('MASCULINO', 'FEMININO', 'INFANTIL', 'UNISSEX', 'NAO_APLICAVEL');
+-- =====================================================================
+-- DDL - Esquema real do sistema (MySQL 8.0)
+-- Reflete a implementação atual do backend (entidades JPA + migrations
+-- Flyway V2..V9). Scripts executáveis equivalentes:
+--   db/script-create-tables.sql  (baseline)
+--   backend/src/main/resources/db/migration/V2..V9  (evolução)
+-- =====================================================================
 
-
--- ==========================================
--- 2. TABELAS DE USUÁRIOS E PESSOAS
--- ==========================================
-CREATE TABLE usuarios (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cpf VARCHAR(11) UNIQUE NOT NULL,
-    nome VARCHAR(255) NOT NULL,
-    data_nascimento DATE,
-    email VARCHAR(255) UNIQUE NOT NULL,
-    senha_hash TEXT NOT NULL,
-    perfil perfil_usuario NOT NULL,
-    ativo BOOLEAN DEFAULT TRUE,
-    data_criacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE doadores (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cpf VARCHAR(11) UNIQUE NOT NULL,
-    nome VARCHAR(255) NOT NULL,
-    data_nascimento DATE
-);
-
-CREATE TABLE beneficiarios (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    cpf VARCHAR(11) UNIQUE NOT NULL,
-    nome VARCHAR(255) NOT NULL,
-    data_nascimento DATE NOT NULL,
-    sexo VARCHAR(30),
-    contato VARCHAR(20),
-    endereco TEXT,
-    composicao_familiar INTEGER CHECK (composicao_familiar > 0),
-    situacao_vulnerabilidade TEXT,
-    status status_beneficiario DEFAULT 'EM_ANALISE',
-    limite_mensal_itens INTEGER DEFAULT 10,  -- Configurável pelo administrador
-    usuario_aprovacao_id UUID REFERENCES usuarios(id),
-    data_cadastro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
+CREATE DATABASE IF NOT EXISTS sanem
+    CHARACTER SET utf8mb4
+    COLLATE utf8mb4_unicode_ci;
+USE sanem;
 
 -- ==========================================
--- 3. CARTÃO VIRTUAL E CATÁLOGO/ESTOQUE
+-- 1. USUÁRIOS E PERFIS
 -- ==========================================
-CREATE TABLE cartoes_virtuais (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    beneficiario_id UUID UNIQUE NOT NULL REFERENCES beneficiarios(id) ON DELETE cascade,
-    codigo_cartao UUID DEFAULT gen_random_uuid() UNIQUE NOT NULL,
-    data_emissao TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    ativo BOOLEAN DEFAULT TRUE
-);
+CREATE TABLE profile (
+    profile_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(255),
+    deleted_at TIMESTAMP(6) NULL,
+    UNIQUE KEY uq_profile_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE categorias (
-    id SERIAL PRIMARY KEY,
-    nome TEXT UNIQUE NOT NULL  -- Ex: Roupas, Calçados, Utensílios
-);
-
-CREATE TABLE itens (
-    id SERIAL PRIMARY KEY,
-    categoria_id INTEGER NOT NULL REFERENCES categorias(id),
-    tipo TEXT NOT NULL,
-    genero genero_item NOT NULL,
-    tamanho VARCHAR(20) NOT NULL,
-    descricao TEXT,
-    quantidade_disponivel INTEGER DEFAULT 0,
-    CONSTRAINT ck_estoque_positivo CHECK (quantidade_disponivel >= 0),  -- O estoque nunca pode ficar negativo
-    CONSTRAINT uk_item_catalogo UNIQUE (categoria_id, tipo, genero, tamanho, descricao)  -- Evita duplicidade do mesmo tipo de item no catálogo
-);
-
+CREATE TABLE app_user (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    login VARCHAR(60) NOT NULL,
+    email VARCHAR(160) NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
+    profile_id INT NOT NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_app_user_profile FOREIGN KEY (profile_id) REFERENCES profile(profile_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    UNIQUE KEY uq_user_login (login),
+    UNIQUE KEY uq_user_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==========================================
--- 4. GESTÃO DE DOAÇÕES (ENTRADAS)
+-- 2. BENEFICIÁRIOS
+-- Observação: o status INACTIVE (migration V9) permite inativar/bloquear
+-- beneficiários aprovados sem removê-los. O soft delete usa deleted_at.
+-- (Os campos address e current_withdrawals_this_month foram removidos nas
+--  migrations V5 e V4, respectivamente.)
 -- ==========================================
-CREATE TABLE doacoes (
-    id SERIAL PRIMARY KEY,
-    doador_id UUID NOT NULL REFERENCES doadores(id),
-    usuario_recebedor_id UUID NOT NULL REFERENCES usuarios(id),
-    data_recebimento TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE beneficiary (
+    beneficiary_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(160) NOT NULL,
+    cpf VARCHAR(14) NOT NULL,
+    phone VARCHAR(120),
+    socioeconomic_data TEXT,
+    beneficiary_status ENUM('PENDING', 'APPROVED', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'PENDING',
+    approver_user_id INT,
+    withdrawal_limit INT DEFAULT NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_beneficiary_approver FOREIGN KEY (approver_user_id) REFERENCES app_user(user_id)
+        ON UPDATE RESTRICT ON DELETE SET NULL,
+    UNIQUE KEY uq_beneficiary_cpf (cpf)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE itens_doacao (
-    id SERIAL PRIMARY KEY,
-    doacao_id INTEGER NOT NULL REFERENCES doacoes(id) ON DELETE CASCADE,
-    item_id INTEGER NOT NULL REFERENCES itens(id),
-    quantidade INTEGER NOT NULL CHECK (quantidade > 0),
-    status status_item_doacao DEFAULT 'AGUARDANDO_TRIAGEM',
-    usuario_triador_id UUID REFERENCES usuarios(id),
-    data_triagem TIMESTAMP
-);
+CREATE TABLE card (
+    card_id INT AUTO_INCREMENT PRIMARY KEY,
+    unique_number VARCHAR(64) NOT NULL,
+    beneficiary_id INT NOT NULL,
+    issue_date TIMESTAMP(6) NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_card_beneficiary FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(beneficiary_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    UNIQUE KEY uq_card_number (unique_number),
+    UNIQUE KEY uq_card_beneficiary (beneficiary_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE withdrawal_limit_reset (
+    withdrawal_limit_reset_id INT AUTO_INCREMENT PRIMARY KEY,
+    beneficiary_id INT NOT NULL,
+    reset_date DATETIME NOT NULL,
+    CONSTRAINT fk_withdrawal_limit_reset_beneficiary FOREIGN KEY (beneficiary_id)
+        REFERENCES beneficiary(beneficiary_id),
+    INDEX idx_withdrawal_limit_reset_beneficiary_date (beneficiary_id, reset_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==========================================
--- 5. GESTÃO DE RETIRADAS (SAÍDAS)
+-- 3. CATÁLOGO / ESTOQUE
 -- ==========================================
-CREATE TABLE retiradas (
-    id SERIAL PRIMARY KEY,
-    cartao_id UUID NOT NULL REFERENCES cartoes_virtuais(id),
-    usuario_registrador_id UUID NOT NULL REFERENCES usuarios(id),
-    data_retirada TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+CREATE TABLE category (
+    category_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    UNIQUE KEY uq_category_name (name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE itens_retirada (
-    id SERIAL PRIMARY KEY,
-    retirada_id INTEGER NOT NULL REFERENCES retiradas(id) ON DELETE CASCADE,
-    item_id INTEGER NOT NULL REFERENCES itens(id),
-    quantidade INTEGER NOT NULL CHECK (quantidade > 0)
-);
+CREATE TABLE item (
+    item_id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(200) NOT NULL,
+    stock_quantity INT NOT NULL DEFAULT 0,
+    tag_code VARCHAR(64),
+    deleted_at TIMESTAMP(6) NULL,
+    UNIQUE KEY uq_item_code (tag_code),
+    CHECK (stock_quantity >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Livro-razão de movimentações de estoque (migration V3)
+CREATE TABLE inventory_transaction (
+    transaction_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    item_id INT NOT NULL,
+    transaction_type ENUM('DONATION_IN', 'DONATION_REVERSAL', 'WITHDRAWAL_OUT', 'WITHDRAWAL_REVERSAL', 'MANUAL_ADJUSTMENT_IN', 'MANUAL_ADJUSTMENT_OUT') NOT NULL,
+    quantity INT NOT NULL,
+    reference_id INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_transaction_item FOREIGN KEY (item_id) REFERENCES item(item_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CHECK (quantity > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==========================================
--- 6. ÍNDICES PARA OTIMIZAÇÃO DE RELATÓRIOS
+-- 4. DOADORES E DOAÇÕES (ENTRADAS)
 -- ==========================================
-CREATE INDEX idx_itens_doacao_status ON itens_doacao(status);
-CREATE INDEX idx_retiradas_data ON retiradas(data_retirada);
-CREATE INDEX idx_doacoes_data ON doacoes(data_recebimento);
-CREATE INDEX idx_itens_categoria ON itens(categoria_id);
+CREATE TABLE donor (
+    donor_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(160) NOT NULL,
+    cpf_cnpj VARCHAR(20),
+    contact VARCHAR(160),
+    email VARCHAR(300) DEFAULT NULL,     -- adicionado na migration V2
+    deleted_at TIMESTAMP(6) NULL,
+    UNIQUE KEY uq_donor_cpfcnpj (cpf_cnpj)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE donation (
+    donation_id INT AUTO_INCREMENT PRIMARY KEY,
+    donation_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    receiver_user_id INT NOT NULL,
+    donor_id INT,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_donation_receiver_user FOREIGN KEY (receiver_user_id) REFERENCES app_user(user_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_donation_donor FOREIGN KEY (donor_id) REFERENCES donor(donor_id)
+        ON UPDATE RESTRICT ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE item_donated (
+    item_donated_id INT AUTO_INCREMENT PRIMARY KEY,
+    donation_id INT NOT NULL,
+    item_id INT NOT NULL,
+    quantity INT NOT NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_item_donated_donation FOREIGN KEY (donation_id) REFERENCES donation(donation_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_item_donated_item FOREIGN KEY (item_id) REFERENCES item(item_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    UNIQUE KEY uk_item_donated (donation_id, item_id),
+    CHECK (quantity > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 5. RETIRADAS (SAÍDAS)
+-- ==========================================
+CREATE TABLE withdrawal (
+    withdrawal_id INT AUTO_INCREMENT PRIMARY KEY,
+    withdrawal_date TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    beneficiary_id INT NOT NULL,
+    attendant_user_id INT NOT NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_withdrawal_beneficiary FOREIGN KEY (beneficiary_id) REFERENCES beneficiary(beneficiary_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_withdrawal_attendant_user FOREIGN KEY (attendant_user_id) REFERENCES app_user(user_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE item_withdrawn (
+    item_withdrawn_id INT AUTO_INCREMENT PRIMARY KEY,
+    withdrawal_id INT NOT NULL,
+    item_id INT NOT NULL,
+    quantity INT NOT NULL,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT fk_item_withdrawn_withdrawal FOREIGN KEY (withdrawal_id) REFERENCES withdrawal(withdrawal_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_item_withdrawn_item FOREIGN KEY (item_id) REFERENCES item(item_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    UNIQUE KEY uk_item_withdrawn (withdrawal_id, item_id),
+    CHECK (quantity > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 6. CONFIGURAÇÃO DE LIMITES
+-- ==========================================
+CREATE TABLE withdrawal_limit_config (
+    config_id INT AUTO_INCREMENT PRIMARY KEY,
+    monthly_item_limit INT NOT NULL DEFAULT 10,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    deleted_at TIMESTAMP(6) NULL,
+    CONSTRAINT chk_monthly_limit_positive CHECK (monthly_item_limit > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 7. PONTOS DE COLETA E SEDES (RF12 - mapa interativo) - migration V8
+-- Entidade independente (sem relacionamentos obrigatórios). Soft delete
+-- via deleted_at. latitude/longitude alimentam o mapa (Leaflet/OSM).
+-- ==========================================
+CREATE TABLE collection_point (
+    collection_point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type ENUM('PARTNER_COLLECTION_POINT', 'ASSISTANCE_ENTITY_HQ') NOT NULL,
+    street VARCHAR(255),
+    number VARCHAR(30),
+    neighborhood VARCHAR(120),
+    city VARCHAR(120),
+    state VARCHAR(60),
+    zip_code VARCHAR(15),
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    operating_hours VARCHAR(255),
+    phone VARCHAR(30),
+    deleted_at TIMESTAMP(6) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 8. ÍNDICES PARA OTIMIZAÇÃO DE RELATÓRIOS
+-- ==========================================
+CREATE INDEX idx_withdrawal_date ON withdrawal(withdrawal_date);
+CREATE INDEX idx_donation_date ON donation(donation_date);
+CREATE INDEX idx_collection_point_type ON collection_point(type);

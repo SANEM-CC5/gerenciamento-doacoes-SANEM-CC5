@@ -44,7 +44,7 @@ CREATE TABLE beneficiary (
      address VARCHAR(255),
      phone VARCHAR(120),
      socioeconomic_data TEXT,
-     beneficiary_status ENUM('PENDING', 'APPROVED', 'REJECTED') NOT NULL DEFAULT 'PENDING',
+     beneficiary_status ENUM('PENDING', 'APPROVED', 'REJECTED', 'INACTIVE') NOT NULL DEFAULT 'PENDING',
      approver_user_id INT,
      withdrawal_limit INT DEFAULT NULL,
      current_withdrawals_this_month INT DEFAULT 0,
@@ -170,4 +170,25 @@ CREATE TABLE withdrawal_limit_config (
     deleted_at TIMESTAMP(6) NULL,
     
     CONSTRAINT chk_monthly_limit_positive CHECK (monthly_item_limit > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- =====================================================================
+-- PONTOS DE COLETA E SEDES DE ENTIDADES ASSISTENCIAIS (mapa interativo)
+-- =====================================================================
+
+CREATE TABLE collection_point (
+    collection_point_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    type ENUM('PARTNER_COLLECTION_POINT', 'ASSISTANCE_ENTITY_HQ') NOT NULL,
+    street VARCHAR(255),
+    number VARCHAR(30),
+    neighborhood VARCHAR(120),
+    city VARCHAR(120),
+    state VARCHAR(60),
+    zip_code VARCHAR(15),
+    latitude DOUBLE NOT NULL,
+    longitude DOUBLE NOT NULL,
+    operating_hours VARCHAR(255),
+    phone VARCHAR(30),
+    deleted_at TIMESTAMP(6) NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

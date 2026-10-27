@@ -13,7 +13,8 @@ import {
     FaCog,
     FaUser,
     FaQuestionCircle,
-    FaShoppingCart
+    FaShoppingCart,
+    FaMapMarkerAlt
 } from "react-icons/fa"
 
 const menuIcons = {
@@ -87,6 +88,12 @@ export default function Navigation() {
                     className={`${styles.menuItem} ${isActive("/cadastrobeneficiario") ? styles.active : ""}`}
                 >
                     {menuIcons.Beneficiários} Beneficiários
+                </Link>
+                <Link
+                    href="/pontoscoleta/lista"
+                    className={`${styles.menuItem} ${isActive("/pontoscoleta") ? styles.active : ""}`}
+                >
+                    <FaMapMarkerAlt /> Pontos de Coleta
                 </Link>
             </nav>
             <div className={styles.sectionTitle}>OTHERS</div>
