@@ -8,6 +8,7 @@ import styles from "../relatorios.module.css";
 
 import apiService from "../../../services/api";
 import { mapItemFromBackend } from "../../../services/dataMapper";
+import { exportTableToCsv } from "../../../utils/exportUtils";
 
 export default function RelatorioEstoque() {
   const [loading, setLoading] = useState(true);
@@ -109,8 +110,26 @@ export default function RelatorioEstoque() {
       <Navigation />
 
       <div className={styles.pageContent}>
-        
-        <RelatoriosNav titulo="Relatório de Estoque" />
+        <RelatoriosNav
+          titulo="Relatório de Estoque"
+          filters={filters}
+          onExportPdf={() => window.print()}
+          onExportCsv={() =>
+            exportTableToCsv(
+              "relatorio_estoque",
+              [
+                { label: "Produto", key: "nome" },
+                { label: "Código", getValue: (i) => i.tagCode || "-" },
+                { label: "Categoria", getValue: (i) => i.categoria || "-" },
+                { label: "Tamanho", getValue: (i) => i.tamanho || "-" },
+                { label: "Estado", getValue: (i) => i.estadoConservacao || "-" },
+                { label: "Gênero", getValue: (i) => i.genero || "-" },
+                { label: "Quantidade", key: "quantidade" },
+              ],
+              items
+            )
+          }
+        />
 
         {/* BARRA DE FILTROS - RF16 */}
         <div className={`${styles.filtersContainer} ${styles.hideOnPrint}`}>

@@ -8,6 +8,7 @@ import styles from "../relatorios.module.css";
 import { FaChevronDown, FaTimes } from 'react-icons/fa';
 
 import apiService from "../../../services/api";
+import { exportTableToCsv } from "../../../utils/exportUtils";
 
 export default function RelatorioRetiradas() {
   const [loading, setLoading] = useState(true);
@@ -126,7 +127,28 @@ export default function RelatorioRetiradas() {
       <div className={styles.pageContent}>
         
         {/* SEU CABEÇALHO E BOTÃO DE IMPRIMIR PERMANECEM INTACTOS AQUI */}
-        <RelatoriosNav titulo="Relatório de Retiradas" />
+        <RelatoriosNav
+          titulo="Relatório de Retiradas"
+          filters={filters}
+          onExportPdf={() => window.print()}
+          onExportCsv={() =>
+            exportTableToCsv(
+              "relatorio_retiradas",
+              [
+                { label: "Data", getValue: (r) => formatarData(r.withdrawalDate) },
+                { label: "Beneficiário", getValue: (r) => r.beneficiary?.fullName || "-" },
+                {
+                  label: "Itens",
+                  getValue: (r) =>
+                    (r.items || [])
+                      .map((item) => `${item.itemDTO?.description} (${item.quantity})`)
+                      .join(", "),
+                },
+              ],
+              withdrawals
+            )
+          }
+        />
 
         {/* BARRA DE FILTROS */}
         <div className={`${styles.filtersContainer} ${styles.hideOnPrint}`} ref={dropdownRef}>

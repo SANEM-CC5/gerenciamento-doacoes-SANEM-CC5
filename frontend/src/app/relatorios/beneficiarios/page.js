@@ -8,6 +8,7 @@ import styles from "../relatorios.module.css";
 
 import apiService from "../../../services/api";
 import { mapBeneficiaryFromBackend } from "../../../services/dataMapper";
+import { exportTableToCsv } from "../../../utils/exportUtils";
 
 export default function RelatorioBeneficiarios() {
   const [loading, setLoading] = useState(true);
@@ -115,7 +116,25 @@ export default function RelatorioBeneficiarios() {
       <Navigation />
 
       <div className={styles.pageContent}>
-        <RelatoriosNav titulo="Relatório de Beneficiários" />
+        <RelatoriosNav
+          titulo="Relatório de Beneficiários"
+          onExportPdf={() => window.print()}
+          onExportCsv={() =>
+            exportTableToCsv(
+              "relatorio_beneficiarios",
+              [
+                { label: "Nome", key: "nomeCompleto" },
+                { label: "CPF", key: "cpfCrnm" },
+                { label: "Telefone", key: "telefoneCelular" },
+                { label: "Status", getValue: (b) => traduzirStatus(b.status) },
+                { label: "Limite", getValue: (b) => b.withdrawalLimit ?? "-" },
+                { label: "Utilizado", getValue: (b) => b.currentWithdrawalsThisMonth ?? 0 },
+                { label: "Restante", getValue: (b) => b.remainingWithdrawals ?? 0 },
+              ],
+              beneficiarios
+            )
+          }
+        />
 
         {/* Cards */}
 

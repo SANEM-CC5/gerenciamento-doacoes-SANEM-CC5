@@ -30,6 +30,11 @@ services:
     ports:
       - "8080:8080"
     environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: sanem
+      DB_USER: sanem
+      DB_PASSWORD: sanem123
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanem?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
       SPRING_DATASOURCE_USERNAME: sanem
       SPRING_DATASOURCE_PASSWORD: sanem123
@@ -46,7 +51,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8080/api
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
     depends_on:
       - backend
     networks:

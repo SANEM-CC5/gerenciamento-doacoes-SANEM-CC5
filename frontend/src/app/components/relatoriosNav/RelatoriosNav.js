@@ -1,8 +1,10 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { FaChevronRight, FaPrint } from "react-icons/fa";
+import { FaChevronRight, FaPrint, FaFilePdf, FaFileCsv } from "react-icons/fa";
 import styles from "../../relatorios/relatorios.module.css";
+import apiService from "../../../services/api";
 
 const RELATORIO_LINKS = [
   {
@@ -12,6 +14,7 @@ const RELATORIO_LINKS = [
     themeColor: "#78909C",
     themeShadow: "rgba(120, 144, 156, 0.15)",
     themeBg: "#ECEFF1",
+    reportType: "general",
   },
   {
     label: "Estoque",
@@ -20,6 +23,7 @@ const RELATORIO_LINKS = [
     themeColor: "#FFA726",
     themeShadow: "rgba(255, 167, 38, 0.15)",
     themeBg: "#FFF3E0",
+    reportType: "inventory",
   },
   {
     label: "Retiradas",
@@ -28,6 +32,7 @@ const RELATORIO_LINKS = [
     themeColor: "#4CAF50",
     themeShadow: "rgba(76, 175, 80, 0.15)",
     themeBg: "#E8F5E9",
+    reportType: "withdrawals",
   },
   {
     label: "Doações",
@@ -36,6 +41,7 @@ const RELATORIO_LINKS = [
     themeColor: "#42A5F5",
     themeShadow: "rgba(66, 165, 245, 0.15)",
     themeBg: "#E3F2FD",
+    reportType: "donations",
   },
   {
     label: "Beneficiários",
@@ -44,12 +50,38 @@ const RELATORIO_LINKS = [
     themeColor: "#AB47BC",
     themeShadow: "rgba(171, 71, 188, 0.15)",
     themeBg: "#F3E5F5",
+    reportType: "beneficiaries",
   },
 ];
 
-export default function RelatoriosNav({ titulo }) {
+export default function RelatoriosNav({ titulo, onExportPdf, onExportCsv, filters = {}, reportType }) {
   const router = useRouter();
   const pathname = usePathname();
+  const [exportingFormat, setExportingFormat] = useState(null); // 'pdf' | 'csv' | null
+
+  // Determinar o tipo de relatório a partir do pathname se não for passado explicitamente
+  const currentLink = RELATORIO_LINKS.find((l) => l.href === pathname);
+  const resolvedType = reportType || currentLink?.reportType || "general";
+
+  async function handleExport(format) {
+    try {
+      setExportingFormat(format);
+      await apiService.exportReport(resolvedType, format, filters);
+    } catch (err) {
+      console.warn(`Erro na exportação via API (${format}), tentando fallback:`, err);
+      if (format === "csv" && typeof onExportCsv === "function") {
+        onExportCsv();
+        return;
+      }
+      if (format === "pdf" && typeof onExportPdf === "function") {
+        onExportPdf();
+        return;
+      }
+      alert(err.message || `Erro ao gerar arquivo ${format.toUpperCase()}.`);
+    } finally {
+      setExportingFormat(null);
+    }
+  }
 
   return (
     <>
@@ -80,7 +112,7 @@ export default function RelatoriosNav({ titulo }) {
                 "--theme-shadow": link.themeShadow,
                 borderColor: ativo ? link.themeColor : "",
                 boxShadow: ativo ? `0 2px 12px ${link.themeShadow}` : "",
-                background: ativo ? link.themeBg : "#fff"
+                background: ativo ? link.themeBg : "#fff",
               }}
             >
               <span className={styles.navCardLabel}>{link.label}</span>
@@ -96,19 +128,39 @@ export default function RelatoriosNav({ titulo }) {
       {titulo && (
         <div className={styles.subHeaderContainer}>
           <div className={styles.pageHeader} style={{ marginBottom: 0 }}>
-            <h2 className={styles.titulo}>
-              {titulo}
-            </h2>
+            <h2 className={styles.titulo}>{titulo}</h2>
             <div className={styles.decoracao} />
           </div>
 
-          <button
-            className={styles.printButton}
-            onClick={() => window.print()}
-            title="Imprimir este relatório"
-          >
-            <FaPrint /> Imprimir
-          </button>
+          <div className={styles.actionButtonsGroup}>
+            <button
+              className={styles.exportPdfButton}
+              onClick={() => handleExport("pdf")}
+              disabled={exportingFormat !== null}
+              title="Exportar este relatório em formato PDF"
+            >
+              <FaFilePdf />
+              {exportingFormat === "pdf" ? "Exportando..." : "Exportar PDF"}
+            </button>
+
+            <button
+              className={styles.exportCsvButton}
+              onClick={() => handleExport("csv")}
+              disabled={exportingFormat !== null}
+              title="Exportar este relatório em formato CSV"
+            >
+              <FaFileCsv />
+              {exportingFormat === "csv" ? "Exportando..." : "Exportar CSV"}
+            </button>
+
+            <button
+              className={styles.printButton}
+              onClick={() => window.print()}
+              title="Imprimir este relatório"
+            >
+              <FaPrint /> Imprimir
+            </button>
+          </div>
         </div>
       )}
     </>

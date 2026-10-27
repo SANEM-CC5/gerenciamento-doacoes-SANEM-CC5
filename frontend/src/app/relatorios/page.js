@@ -6,6 +6,7 @@ import RelatoriosNav from "../components/relatoriosNav/RelatoriosNav";
 import { useRouter } from "next/navigation";
 import styles from "./relatorios.module.css";
 import apiService from "../../services/api";
+import { exportTableToCsv } from "../../utils/exportUtils";
 import {
   mapBeneficiaryFromBackend,
   mapItemFromBackend,
@@ -296,7 +297,20 @@ export default function RelatoriosPage() {
       <Navigation />
 
       <div className={styles.pageContent}>
-        <RelatoriosNav titulo="Relatório Geral" />
+        <RelatoriosNav
+          titulo="Relatório Geral"
+          onExportPdf={() => window.print()}
+          onExportCsv={() =>
+            exportTableToCsv(
+              "relatorio_geral",
+              [
+                { label: "Indicador", key: "label" },
+                { label: "Valor", key: "value" },
+              ],
+              cardList
+            )
+          }
+        />
 
         {/* Cards */}
         <div className={styles.cardsRow}>

@@ -9,6 +9,7 @@ import { FaChevronDown, FaTimes } from 'react-icons/fa';
 
 import apiService from "../../../services/api";
 import { mapDonationFromBackend } from "../../../services/dataMapper";
+import { exportTableToCsv } from "../../../utils/exportUtils";
 
 export default function RelatorioDoacoes() {
   const [loading, setLoading] = useState(true);
@@ -127,7 +128,26 @@ export default function RelatorioDoacoes() {
       <div className={styles.pageContent}>
         
         {/* SEU CABEÇALHO E BOTÃO DE IMPRIMIR PERMANECEM INTACTOS AQUI */}
-        <RelatoriosNav titulo="Relatório de Doações" />
+        <RelatoriosNav
+          titulo="Relatório de Doações"
+          filters={filters}
+          onExportPdf={() => window.print()}
+          onExportCsv={() =>
+            exportTableToCsv(
+              "relatorio_doacoes",
+              [
+                { label: "Data", getValue: (d) => formatarData(d.donationDate) },
+                { label: "Doador", getValue: (d) => d.donor?.name || "-" },
+                {
+                  label: "Itens",
+                  getValue: (d) =>
+                    (d.items || []).map((item) => `${item.nome} (${item.quantity})`).join(", "),
+                },
+              ],
+              donations
+            )
+          }
+        />
 
         {/* BARRA DE FILTROS */}
         <div className={`${styles.filtersContainer} ${styles.hideOnPrint}`} ref={dropdownRef}>

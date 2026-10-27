@@ -406,7 +406,45 @@ class ApiService {
             method: "PATCH",
         });
     }
+
+    // Metodos para Exportacao de Relatorios Gerenciais (PDF e CSV)
+    async exportReport(type, format, filters = {}) {
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+        );
+        const queryParams = new URLSearchParams(cleanFilters).toString();
+        const endpoint = `/report/${type}/${format.toLowerCase()}${queryParams ? `?${queryParams}` : ""}`;
+        const url = `${this.baseURL}${endpoint}`;
+
+        const token = authService.getToken();
+        const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await fetch(url, {
+            headers: {
+                ...authHeader
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.message || `Erro ao exportar relatorio (${response.status})`);
+        }
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        const extension = format.toLowerCase();
+        link.download = `relatorio_${type}_${new Date().toISOString().slice(0, 10)}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+
+        return { success: true };
+    }
 }
+
 
 // Instância singleton do serviço
 const apiService = new ApiService()
