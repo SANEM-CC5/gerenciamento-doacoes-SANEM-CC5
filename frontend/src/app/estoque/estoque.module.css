@@ -545,3 +545,74 @@
     padding: 20px 15px;
   }
 }
+
+
+/* Estilos adicionais para RF16 */
+.filterGroupSelect {
+  flex: 1;
+  min-width: 160px;
+}
+
+.filtersContainer select {
+  width: 100%;
+  height: 42px;
+  padding: 6px 12px;
+  border: 2px solid var(--color-border, #ccc);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+  background: #fff;
+  cursor: pointer;
+}
+
+.filtersContainer select:focus {
+  outline: none;
+  border-color: var(--color-primary, #1976d2);
+}
+
+.formRow {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .formRow {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.badgeCategory {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #e3f2fd;
+  color: #1565c0;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeCondition {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #e8f5e9;
+  color: #2e7d32;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badgeGender {
+  display: inline-block;
+  padding: 4px 10px;
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap;
+}

@@ -126,6 +126,7 @@ public class ItemService {
     private Specification<Item> generateSpecification(ItemFilterDTO itemFilterDTO) {
         Specification<Item> notDeletedSpecification = (root, query, criteriaBuilder) -> 
             criteriaBuilder.isNull(root.get("deletedAt"));
+            
         Specification<Item> searchSpecification = (root, query, criteriaBuilder) -> {
             if (itemFilterDTO.searchTerm() == null || itemFilterDTO.searchTerm().trim().isEmpty()) {
                 return criteriaBuilder.conjunction();
@@ -150,8 +151,44 @@ public class ItemService {
             return predicates;
         };
 
+        Specification<Item> categorySpecification = (root, query, criteriaBuilder) -> {
+            if (itemFilterDTO.categoryId() != null) {
+                return criteriaBuilder.equal(root.get("category").get("categoryId"), itemFilterDTO.categoryId());
+            }
+            if (itemFilterDTO.category() != null && !itemFilterDTO.category().trim().isEmpty()) {
+                String catPattern = "%" + itemFilterDTO.category().trim().toLowerCase() + "%";
+                return criteriaBuilder.like(criteriaBuilder.lower(root.get("category").get("name")), catPattern);
+            }
+            return criteriaBuilder.conjunction();
+        };
+
+        Specification<Item> sizeSpecification = (root, query, criteriaBuilder) -> {
+            if (itemFilterDTO.size() == null || itemFilterDTO.size().trim().isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("size")), "%" + itemFilterDTO.size().trim().toLowerCase() + "%");
+        };
+
+        Specification<Item> conservationStateSpecification = (root, query, criteriaBuilder) -> {
+            if (itemFilterDTO.conservationState() == null || itemFilterDTO.conservationState().trim().isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("conservationState")), "%" + itemFilterDTO.conservationState().trim().toLowerCase() + "%");
+        };
+
+        Specification<Item> genderSpecification = (root, query, criteriaBuilder) -> {
+            if (itemFilterDTO.gender() == null || itemFilterDTO.gender().trim().isEmpty()) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.like(criteriaBuilder.lower(root.get("gender")), "%" + itemFilterDTO.gender().trim().toLowerCase() + "%");
+        };
+
         return Specification.where(searchSpecification)
                 .and(quantitySpecification)
+                .and(categorySpecification)
+                .and(sizeSpecification)
+                .and(conservationStateSpecification)
+                .and(genderSpecification)
                 .and(notDeletedSpecification);
     }
 

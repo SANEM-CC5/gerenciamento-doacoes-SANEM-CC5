@@ -21,8 +21,12 @@ export const mapDonorFromBackend = (backendDonor) => {
 export const mapItemToBackend = (frontendItem) => {
     return {
         description: frontendItem.nome || frontendItem.descricao || "",
-        stockQuantity: frontendItem.quantidade || 0,
-        tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null
+        stockQuantity: Number(frontendItem.quantidade) || 0,
+        tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null,
+        categoryId: frontendItem.categoriaId ? Number(frontendItem.categoriaId) : null,
+        size: frontendItem.tamanho?.trim() ? frontendItem.tamanho.trim() : null,
+        conservationState: frontendItem.estadoConservacao?.trim() ? frontendItem.estadoConservacao.trim() : null,
+        gender: frontendItem.genero?.trim() ? frontendItem.genero.trim() : null
     }
 }
 
@@ -32,7 +36,12 @@ export const mapItemFromBackend = (backendItem) => {
         nome: backendItem.description,
         descricao: backendItem.description,
         quantidade: backendItem.stockQuantity,
-        tagCode: backendItem.tagCode || null
+        tagCode: backendItem.tagCode || null,
+        categoriaId: backendItem.category ? backendItem.category.categoryId : (backendItem.categoryId || null),
+        categoria: backendItem.category ? backendItem.category.name : (backendItem.categoryName || ""),
+        tamanho: backendItem.size || "",
+        estadoConservacao: backendItem.conservationState || "",
+        genero: backendItem.gender || ""
     }
 }
 
@@ -90,8 +99,6 @@ export const mapBeneficiaryToBackend = (frontendBeneficiary) => {
 }
 
 export const mapBeneficiaryFromBackend = (backendBeneficiary) => {
-
-
     return {
         id: backendBeneficiary.beneficiaryId,
         nomeCompleto: backendBeneficiary.fullName,

@@ -9,7 +9,7 @@ services:
       MYSQL_USER: sanem
       MYSQL_PASSWORD: sanem123
     ports:
-      - "3307:3306"
+      - "3309:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./db/script-create-tables.sql:/docker-entrypoint-initdb.d/01-create-tables.sql

@@ -21,7 +21,7 @@ INSERT INTO app_user (name, login, email, password_hash, status, profile_id) VAL
 -- ========================
 INSERT INTO beneficiary (full_name, cpf, address, phone, socioeconomic_data, beneficiary_status, approver_user_id) VALUES
                                                                                                                        ('Maria Oliveira', '111.111.111-11', 'Street A, 123', '11-99999-1111', 'Low income', 'APPROVED', 3),
-                                                                                                                       ('José Santos', '222.222.222-22', 'Street B, 456', '11-99999-2222', 'Vulnerable situation', 'PENDING', NULL),
+                                                                                                                       ('JosÃ© Santos', '222.222.222-22', 'Street B, 456', '11-99999-2222', 'Vulnerable situation', 'PENDING', NULL),
                                                                                                                        ('Clara Silva', '333.333.333-33', 'Street C, 789', '11-99999-3333', 'Unemployed', 'REJECTED', 3);
 
 -- ========================
@@ -36,17 +36,20 @@ INSERT INTO card (unique_number, beneficiary_id) VALUES
 -- CATEGORY
 -- ========================
 INSERT INTO category (name) VALUES
-                                ('Food'),
-                                ('Clothing'),
-                                ('Hygiene');
+                                ('Roupas'),
+                                ('Calçados'),
+                                ('Alimentos'),
+                                ('Higiene'),
+                                ('Utensílios Domésticos'),
+                                ('Cama, Mesa e Banho');
 
 -- ========================
 -- ITEM
 -- ========================
-INSERT INTO item (description, stock_quantity, tag_code) VALUES
-                                                            ('Rice 5kg', 50, 'ETQ-RICE-01'),
-                                                            ('T-shirt M', 30, 'ETQ-TSHIRT-01'),
-                                                            ('Soap 90g', 100, 'ETQ-SOAP-01');
+INSERT INTO item (description, stock_quantity, tag_code, category_id, size, conservation_state, gender) VALUES
+                                                            ('Arroz 5kg', 50, 'ETQ-ARR-01', 3, NULL, 'Novo', 'Não aplicável'),
+                                                            ('Camiseta Algodão M', 30, 'ETQ-ROU-01', 1, 'M', 'Seminovo', 'Unissex'),
+                                                            ('Sabonete 90g', 100, 'ETQ-HIG-01', 4, NULL, 'Novo', 'Não aplicável');
 
 -- ========================
 -- DONOR
@@ -69,7 +72,7 @@ INSERT INTO donation (receiver_user_id, donor_id) VALUES
 -- ========================
 INSERT INTO withdrawal (beneficiary_id, attendant_user_id) VALUES
                                                                (1, 2), -- Attendant attends Maria
-                                                               (2, 2), -- Attendant attends José
+                                                               (2, 2), -- Attendant attends JosÃ©
                                                                (3, 2); -- Attendant attends Clara
 
 -- ========================
@@ -85,7 +88,7 @@ INSERT INTO item_donated (donation_id, item_id, quantity) VALUES
 -- ========================
 INSERT INTO item_withdrawn (withdrawal_id, item_id, quantity) VALUES
                                                                   (1, 1, 2), -- Maria withdraws 2 rice bags
-                                                                  (2, 2, 1), -- José withdraws 1 t-shirt
+                                                                  (2, 2, 1), -- JosÃ© withdraws 1 t-shirt
                                                                   (3, 3, 3); -- Clara withdraws 3 soaps
 
 -- ========================

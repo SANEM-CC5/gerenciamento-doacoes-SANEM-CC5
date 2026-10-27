@@ -39,8 +39,8 @@ export default function RegistrarRetiradaPage() {
       const mapped = (data || []).map(mapBeneficiaryFromBackend);
       setBeneficiaries(mapped);
     } catch (err) {
-      console.error("Erro ao carregar beneficiários:", err);
-      showNotification("Erro ao carregar beneficiários", "error");
+      console.error("Erro ao carregar beneficiÃ¡rios:", err);
+      showNotification("Erro ao carregar beneficiÃ¡rios", "error");
     }
   };
 
@@ -60,7 +60,7 @@ export default function RegistrarRetiradaPage() {
       const info = await apiService.getWithdrawalLimitInfo(beneficiaryId);
       setLimitInfo(info);
     } catch (err) {
-      console.error("Erro ao carregar informações de limite:", err);
+      console.error("Erro ao carregar informaÃ§Ãµes de limite:", err);
       setLimitInfo(null);
     }
   };
@@ -107,7 +107,7 @@ export default function RegistrarRetiradaPage() {
     e.preventDefault();
     
     if (!selectedBeneficiary) {
-      showNotification("Selecione um beneficiário", "error");
+      showNotification("Selecione um beneficiÃ¡rio", "error");
       return;
     }
 
@@ -116,21 +116,21 @@ export default function RegistrarRetiradaPage() {
       return;
     }
 
-    // Validar se o usuário está logado
+    // Validar se o usuÃ¡rio estÃ¡ logado
     const user = authService.getUser();
     if (!user || !user.id) {
-      showNotification("Usuário não autenticado. Por favor, faça login novamente.", "error");
+      showNotification("UsuÃ¡rio nÃ£o autenticado. Por favor, faÃ§a login novamente.", "error");
       return;
     }
 
-    // Validar se há itens com quantidade válida
+    // Validar se hÃ¡ itens com quantidade vÃ¡lida
     const invalidItems = selectedItems.filter(si => !si.itemId || !si.quantity || si.quantity <= 0);
     if (invalidItems.length > 0) {
-      showNotification("Alguns itens possuem quantidade inválida", "error");
+      showNotification("Alguns itens possuem quantidade invÃ¡lida", "error");
       return;
     }
 
-    // Validar limite de retirada se houver informação disponível
+    // Validar limite de retirada se houver informaÃ§Ã£o disponÃ­vel
     if (limitInfo && limitInfo.remainingItems !== null && limitInfo.remainingItems < totalItems) {
       const confirmMessage = `O total de itens selecionados (${totalItems}) excede o limite restante (${limitInfo.remainingItems}). Deseja continuar mesmo assim?`;
       if (!window.confirm(confirmMessage)) {
@@ -178,13 +178,13 @@ export default function RegistrarRetiradaPage() {
           <div className={styles.decoracao}></div>
 
           <form onSubmit={handleSubmit}>
-            {/* Seleção de Beneficiário */}
+            {/* SeleÃ§Ã£o de BeneficiÃ¡rio */}
             <div className={styles.section}>
-              <h2>Beneficiário</h2>
+              <h2>BeneficiÃ¡rio</h2>
               <div className={styles.searchBox}>
                 <input
                   type="text"
-                  placeholder="Buscar beneficiário por nome ou CPF..."
+                  placeholder="Buscar beneficiÃ¡rio por nome ou CPF..."
                   value={searchBeneficiary}
                   onChange={(e) => setSearchBeneficiary(e.target.value)}
                   className={styles.searchInput}
@@ -193,7 +193,7 @@ export default function RegistrarRetiradaPage() {
               {searchBeneficiary && (
                 <div className={styles.dropdown}>
                   {filteredBeneficiaries.length === 0 ? (
-                    <div className={styles.dropdownItem}>Nenhum beneficiário encontrado</div>
+                    <div className={styles.dropdownItem}>Nenhum beneficiÃ¡rio encontrado</div>
                   ) : (
                     filteredBeneficiaries.map(beneficiary => (
                       <div
@@ -214,15 +214,15 @@ export default function RegistrarRetiradaPage() {
               {selectedBeneficiary && (
                 <div className={styles.selectedBeneficiary}>
                   <div>
-                    <strong>Beneficiário selecionado:</strong> {selectedBeneficiary.nomeCompleto}
+                    <strong>BeneficiÃ¡rio selecionado:</strong> {selectedBeneficiary.nomeCompleto}
                   </div>
                   {limitInfo && (
                     <div style={{ marginTop: '10px', padding: '10px', background: '#f0f0f0', borderRadius: '5px' }}>
-                      <div><strong>Limite mensal:</strong> {limitInfo.itemsWithdrawnThisMonth || 0}/{limitInfo.monthlyLimit || 'N/A'} itens retirados este mês</div>
+                      <div><strong>Limite mensal:</strong> {limitInfo.itemsWithdrawnThisMonth || 0}/{limitInfo.monthlyLimit || 'N/A'} itens retirados este mÃªs</div>
                       <div><strong>Restante:</strong> {limitInfo.remainingItems || 0} itens</div>
                       {limitInfo.remainingItems !== null && limitInfo.remainingItems < totalItems && (
                         <div style={{ marginTop: '5px', color: '#dc3545', fontWeight: '600' }}>
-                          Atenção: O total de itens selecionados ({totalItems}) excede o limite restante ({limitInfo.remainingItems})
+                          AtenÃ§Ã£o: O total de itens selecionados ({totalItems}) excede o limite restante ({limitInfo.remainingItems})
                         </div>
                       )}
                     </div>
@@ -231,13 +231,13 @@ export default function RegistrarRetiradaPage() {
               )}
             </div>
 
-            {/* Seleção de Itens */}
+            {/* SeleÃ§Ã£o de Itens */}
             <div className={styles.section}>
               <h2>Itens</h2>
               <div className={styles.searchBox}>
                 <input
                   type="text"
-                  placeholder="Buscar item por nome ou descrição..."
+                  placeholder="Buscar item por nome ou descriÃ§Ã£o..."
                   value={searchItem}
                   onChange={(e) => setSearchItem(e.target.value)}
                   className={styles.searchInput}
@@ -256,7 +256,7 @@ export default function RegistrarRetiradaPage() {
                       >
                         <div><strong>{item.nome || item.descricao}</strong></div>
                         <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                          Estoque: {item.quantidade} | Categoria: {item.categoria || 'N/A'}
+                          Estoque: {item.quantidade} | Categoria: {item.categoria || "N/A"}{item.tamanho ? ` | Tam: ${item.tamanho}` : ""}{item.estadoConservacao ? ` | Estado: ${item.estadoConservacao}` : ""}
                         </div>
                       </div>
                     ))
@@ -275,7 +275,7 @@ export default function RegistrarRetiradaPage() {
                         <div className={styles.itemInfo}>
                           <strong>{item?.nome || item?.descricao || 'Item'}</strong>
                           <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                            Disponível: {item?.quantidade || 0}
+                            DisponÃ­vel: {item?.quantidade || 0}
                           </div>
                         </div>
                         <div className={styles.itemControls}>

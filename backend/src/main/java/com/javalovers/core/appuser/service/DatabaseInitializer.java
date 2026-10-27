@@ -36,8 +36,8 @@ public class DatabaseInitializer implements CommandLineRunner {
     // Verificar e adicionar coluna issue_date na tabela card se não existir
     checkAndAddIssueDateColumn();
 
-    // Verificar e remover coluna category_id da tabela item se existir
-    checkAndRemoveCategoryIdColumn();
+    // RF16: Verificar e adicionar colunas na tabela item se não existirem
+    checkAndAddRF16Columns();
   }
 
   private void checkAndAddIssueDateColumn() {
@@ -63,48 +63,50 @@ public class DatabaseInitializer implements CommandLineRunner {
     }
   }
 
-  private void checkAndRemoveCategoryIdColumn() {
+  private void checkAndAddRF16Columns() {
     try {
-      // Verificar se a coluna category_id existe na tabela item
-      String checkColumnSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
-          "WHERE TABLE_SCHEMA = DATABASE() " +
+      checkAndAddColumn("item", "category_id", "INT NULL");
+      checkAndAddColumn("item", "size", "VARCHAR(50) NULL");
+      checkAndAddColumn("item", "conservation_state", "VARCHAR(50) NULL");
+      checkAndAddColumn("item", "gender", "VARCHAR(50) NULL");
+
+      // Verificar e adicionar foreign key fk_item_category se a coluna existir
+      String checkFkSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS " +
+          "WHERE CONSTRAINT_SCHEMA = DATABASE() " +
           "AND TABLE_NAME = 'item' " +
-          "AND COLUMN_NAME = 'category_id'";
+          "AND CONSTRAINT_NAME = 'fk_item_category' " +
+          "AND CONSTRAINT_TYPE = 'FOREIGN KEY'";
 
-      Integer columnExists = jdbcTemplate.queryForObject(checkColumnSql, Integer.class);
-
-      if (columnExists != null && columnExists > 0) {
-        log.info("Coluna category_id encontrada na tabela item. Removendo...");
-
-        // Primeiro, verificar e remover a foreign key constraint se existir
-        String checkFkSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS " +
-            "WHERE CONSTRAINT_SCHEMA = DATABASE() " +
-            "AND TABLE_NAME = 'item' " +
-            "AND CONSTRAINT_NAME = 'fk_item_category' " +
-            "AND CONSTRAINT_TYPE = 'FOREIGN KEY'";
-
-        Integer fkExists = jdbcTemplate.queryForObject(checkFkSql, Integer.class);
-
-        if (fkExists != null && fkExists > 0) {
-          try {
-            jdbcTemplate.execute("ALTER TABLE item DROP FOREIGN KEY fk_item_category");
-            log.info("Foreign key fk_item_category removida com sucesso!");
-          } catch (Exception e) {
-            log.warn("Erro ao remover foreign key fk_item_category: {}", e.getMessage());
-          }
-        } else {
-          log.debug("Foreign key fk_item_category não existe.");
+      Integer fkExists = jdbcTemplate.queryForObject(checkFkSql, Integer.class);
+      if (fkExists == null || fkExists == 0) {
+        try {
+          jdbcTemplate.execute("ALTER TABLE item ADD CONSTRAINT fk_item_category FOREIGN KEY (category_id) REFERENCES category(category_id) ON UPDATE RESTRICT ON DELETE SET NULL");
+          log.info("Foreign key fk_item_category adicionada com sucesso!");
+        } catch (Exception e) {
+          log.warn("Aviso ao adicionar foreign key fk_item_category: {}", e.getMessage());
         }
-
-        // Depois, remover a coluna
-        jdbcTemplate.execute("ALTER TABLE item DROP COLUMN category_id");
-        log.info("Coluna category_id removida com sucesso!");
-      } else {
-        log.debug("Coluna category_id não existe na tabela item.");
       }
     } catch (Exception e) {
-      log.warn("Erro ao verificar/remover coluna category_id: {}", e.getMessage());
-      // Não lançar exceção para não impedir a inicialização da aplicação
+      log.warn("Erro ao verificar/adicionar colunas do RF16: {}", e.getMessage());
+    }
+  }
+
+  private void checkAndAddColumn(String tableName, String columnName, String columnType) {
+    try {
+      String checkColumnSql = "SELECT COUNT(*) FROM INFORMATION_SCHEMA.COLUMNS " +
+          "WHERE TABLE_SCHEMA = DATABASE() " +
+          "AND TABLE_NAME = ? " +
+          "AND COLUMN_NAME = ?";
+
+      Integer columnExists = jdbcTemplate.queryForObject(checkColumnSql, Integer.class, tableName, columnName);
+
+      if (columnExists == null || columnExists == 0) {
+        log.info("Coluna {} não encontrada na tabela {}. Adicionando...", columnName, tableName);
+        jdbcTemplate.execute("ALTER TABLE " + tableName + " ADD COLUMN " + columnName + " " + columnType);
+        log.info("Coluna {} adicionada com sucesso na tabela {}!", columnName, tableName);
+      }
+    } catch (Exception e) {
+      log.warn("Erro ao verificar/adicionar coluna {} na tabela {}: {}", columnName, tableName, e.getMessage());
     }
   }
 

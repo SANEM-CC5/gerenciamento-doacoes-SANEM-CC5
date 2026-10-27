@@ -1,5 +1,5 @@
 -- =====================================================================
--- ESQUEMA: Sistema de Doações / Beneficiários
+-- ESQUEMA: Sistema de DoaÃ§Ãµes / BeneficiÃ¡rios
 -- Adaptado para MySQL 8.0+
 -- =====================================================================
 
@@ -9,7 +9,7 @@ CREATE DATABASE IF NOT EXISTS sanem
 USE sanem;
 
 -- =====================================================================
--- TABELAS BÁSICAS
+-- TABELAS BÃSICAS
 -- =====================================================================
 
 CREATE TABLE profile (
@@ -81,8 +81,14 @@ CREATE TABLE item (
     description VARCHAR(200) NOT NULL,
     stock_quantity INT NOT NULL DEFAULT 0,
     tag_code VARCHAR(64),
+    category_id INT NULL,
+    size VARCHAR(50) NULL,
+    conservation_state VARCHAR(50) NULL,
+    gender VARCHAR(50) NULL,
     deleted_at TIMESTAMP(6) NULL,
 
+    CONSTRAINT fk_item_category FOREIGN KEY (category_id) REFERENCES category(category_id)
+        ON UPDATE RESTRICT ON DELETE SET NULL,
     UNIQUE KEY uq_item_code (tag_code),
     CHECK (stock_quantity >= 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -158,7 +164,7 @@ CREATE TABLE item_withdrawn (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- =====================================================================
--- TABELA DE CONFIGURAÇÃO
+-- TABELA DE CONFIGURAÃ‡ÃƒO
 -- =====================================================================
 
 CREATE TABLE withdrawal_limit_config (

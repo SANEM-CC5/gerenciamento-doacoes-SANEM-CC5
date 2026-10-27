@@ -13,6 +13,7 @@
 | RF09 | O administrador e o Funcionário devem poder classificar as doações disponibilizando ou excluindo itens caso o mesmo seja inadequado para doação (danificados, impróprios) |
 | RF10 | O administrador deve poder consultar e gerar relatório do histórico de retirada de itens, beneficiários atendidos e distribuição por período |
 | RF11 | O administrador deve poder analisar e aprovar ou reprovar solicitações de cadastro de beneficiários, além de poder bloquear cadastros já aprovados anteriormente (alteração de status) |
+| RF16 | O sistema deve permitir consultar e filtrar os itens disponíveis em estoque por categoria, tamanho, estado de conservação e demais características cadastradas |
 
 ---
 
