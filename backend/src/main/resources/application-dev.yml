@@ -1,0 +1,8 @@
+# =====================================================================
+# Perfil "dev" (SPRING_PROFILES_ACTIVE=dev)
+# Habilita o seed de dados de exemplo (db/seed) além do schema (db/migration).
+# NÃO usar em produção: em produção os usuários/dados são cadastrados manualmente.
+# =====================================================================
+spring:
+  flyway:
+    locations: classpath:db/migration,classpath:db/seed

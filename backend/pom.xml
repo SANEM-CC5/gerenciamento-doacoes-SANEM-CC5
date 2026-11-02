@@ -46,8 +46,8 @@
     </dependency>
 
       <dependency>
-          <groupId>com.mysql</groupId>
-          <artifactId>mysql-connector-j</artifactId>
+          <groupId>org.postgresql</groupId>
+          <artifactId>postgresql</artifactId>
           <scope>runtime</scope>
       </dependency>
       <!-- JWT -->
@@ -90,14 +90,10 @@
         <optional>true</optional>
     </dependency>
 
-    <!-- Flyway for Database Migrations -->
+    <!-- Flyway for Database Migrations (PostgreSQL já é suportado pelo flyway-core) -->
     <dependency>
       <groupId>org.flywaydb</groupId>
       <artifactId>flyway-core</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-mysql</artifactId>
     </dependency>
 
     <!-- QR Code Generation -->
