@@ -14,7 +14,8 @@ import {
     FaUser,
     FaQuestionCircle,
     FaShoppingCart,
-    FaMapMarkerAlt
+    FaMapMarkerAlt,
+    FaBullhorn
 } from "react-icons/fa"
 
 const menuIcons = {
@@ -70,6 +71,12 @@ export default function Navigation() {
                     className={`${styles.menuItem} ${isActive("/doacao") ? styles.active : ""}`}
                 >
                     <FaHandHoldingHeart /> Doações
+                </Link>
+                <Link
+                    href="/demandas"
+                    className={`${styles.menuItem} ${isActive("/demandas") ? styles.active : ""}`}
+                >
+                    <FaBullhorn /> Demandas
                 </Link>
                 <Link
                     href="/retirada"

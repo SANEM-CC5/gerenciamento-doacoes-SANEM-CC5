@@ -21,6 +21,12 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 - Registrar endereço e horário de funcionamento de cada local
 - Visualizar todas as localizações em um mapa interativo (Leaflet + OpenStreetMap)
 
+#### 📣 Demandas Prioritárias (RF20)
+
+- Cadastrar, consultar, atualizar e inativar demandas prioritárias por itens do estoque
+- Acompanhar o progresso "recebido X de Y", calculado automaticamente a partir das doações
+- Destaque das demandas ativas na Home e na tela de registro de doação
+
 #### 📦 Controle de Doações e Estoque
 
 - Registrar os itens recebidos em doação

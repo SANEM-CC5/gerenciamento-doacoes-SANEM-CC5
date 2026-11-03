@@ -401,6 +401,41 @@ class ApiService {
         })
     }
 
+    // Métodos para Demandas Prioritárias (RF20)
+    async getPriorityDemands(filters = {}) {
+        const clean = Object.fromEntries(
+            Object.entries(filters).filter(([, v]) => v !== "" && v !== null && v !== undefined)
+        )
+        const queryParams = new URLSearchParams(clean).toString()
+        return this.request(`/priority-demand/all${queryParams ? `?${queryParams}` : ""}`)
+    }
+
+    async getPriorityDemand(id) {
+        return this.request(`/priority-demand/${id}`)
+    }
+
+    async createPriorityDemand(demandData) {
+        return this.request("/priority-demand", {
+            method: "POST",
+            body: JSON.stringify(demandData)
+        })
+    }
+
+    async updatePriorityDemand(id, demandData) {
+        return this.request(`/priority-demand/${id}`, {
+            method: "PUT",
+            body: JSON.stringify(demandData)
+        })
+    }
+
+    async inactivatePriorityDemand(id) {
+        return this.request(`/priority-demand/${id}/inactivate`, { method: "PATCH" })
+    }
+
+    async reactivatePriorityDemand(id) {
+        return this.request(`/priority-demand/${id}/reactivate`, { method: "PATCH" })
+    }
+
     // Métodos para Configuração de Limites de Retirada
     async getWithdrawalLimitConfig() {
         return this.request("/withdrawal-limit-config/active")
