@@ -50,7 +50,7 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 - **Spring Boot 3.2.0**
 - **Spring Security** - Autenticação e autorização
 - **Spring Data JPA** - Persistência de dados
-- **MySQL 8.0** - Banco de dados
+- **PostgreSQL (NeonDB)** - Banco de dados (hospedado na nuvem)
 - **JWT** - Tokens de autenticação
 - **Maven** - Gerenciamento de dependências
 
@@ -122,7 +122,7 @@ JavaLovers/
 
 - Java 17 ou superior
 - Node.js 18 ou superior
-- MySQL 8.0 ou superior
+- Uma conta/banco PostgreSQL no [NeonDB](https://neon.tech) (connection string)
 - Docker e Docker Compose (opcional)
 
 ### Execução com Docker (Recomendado)
@@ -131,19 +131,26 @@ JavaLovers/
 
     ```bash
     git clone <url-do-repositorio>
-    cd JavaLovers
+    cd gerenciamento-doacoes-SANEM-CC5
     ```
 
-2. **Execute com Docker Compose**
+2. **Configure as credenciais do banco (NeonDB)**
+    - Copie `.env.example` para `.env` e preencha com a connection string do Neon
+      (`SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`).
+    - O `.env` não é versionado (está no `.gitignore`).
+
+3. **Execute com Docker Compose**
 
     ```bash
-    docker-compose up -d
+    docker-compose up -d --build
     ```
 
-3. **Acesse a aplicação**
+    A Flyway cria o esquema e aplica o seed no banco Neon automaticamente no startup do backend.
+
+4. **Acesse a aplicação**
     - Frontend: http://localhost:3000
     - Backend API: http://localhost:8080/api
-    - MySQL: localhost:3306
+    - Banco: PostgreSQL hospedado no NeonDB (nuvem)
 
 ### Execução Manual
 
@@ -155,19 +162,20 @@ JavaLovers/
     cd backend
     ```
 
-2. **Configure o banco de dados**
-    - Crie um banco de dados MySQL chamado `javalovers`
-    - Execute os scripts SQL na pasta `Banco de Dados/`
+2. **Configure o banco de dados (NeonDB)**
+    - Crie um projeto/banco PostgreSQL no NeonDB e copie a connection string.
+    - Defina as variáveis de ambiente (ou use o `.env` na raiz):
+      `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`.
+    - A Flyway cria o esquema e aplica o seed automaticamente na primeira execução.
 
-3. **Configure as credenciais do banco**
-    - Edite o arquivo `src/main/resources/application.yml`
-    - Atualize as credenciais do MySQL
-
-4. **Execute a aplicação**
+3. **Execute a aplicação**
 
     ```bash
-    mvn clean package
+    export SPRING_DATASOURCE_URL="jdbc:postgresql://<host-neon>/<db>?sslmode=require"
+    export SPRING_DATASOURCE_USERNAME="<usuario>"
+    export SPRING_DATASOURCE_PASSWORD="<senha>"
 
+    mvn clean package
     java -jar target/javalovers-backend-1.0.0.jar
     ```
 
@@ -192,23 +200,36 @@ JavaLovers/
 
 ## 🔧 Configuração do Banco de Dados
 
-### Criação do Banco
-
-```sql
-CREATE DATABASE javalovers;
-```
+O banco é **PostgreSQL hospedado no NeonDB**. Não há banco local: o backend conecta direto no
+Neon, e o esquema + seed são aplicados pela **Flyway** no startup
+(`backend/src/main/resources/db/migration/V1__init_schema.sql` e `V2__seed_data.sql`).
 
 ### Configuração das Credenciais
 
-No arquivo `backend/src/main/resources/application.yml`:
+As credenciais vêm de variáveis de ambiente (nunca commitadas). Copie `.env.example` para `.env`
+e preencha com os dados do Neon:
 
-```yaml
-spring:
-    datasource:
-        url: jdbc:mysql://localhost:3306/javalovers?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-        username: seu_usuario
-        password: sua_senha
+```bash
+SPRING_DATASOURCE_URL=jdbc:postgresql://<host-neon>/<database>?sslmode=require
+SPRING_DATASOURCE_USERNAME=<usuario-neon>
+SPRING_DATASOURCE_PASSWORD=<senha-neon>
 ```
+
+> O Neon **exige SSL** — mantenha `?sslmode=require` na URL.
+> O `application.yml` já lê essas variáveis (com fallback para um Postgres local em dev).
+
+### Dados de exemplo (dev) x produção
+
+O comportamento do seed é controlado pelo profile do Spring (`SPRING_PROFILES_ACTIVE`):
+
+- **`dev`** — a Flyway aplica o schema (`db/migration`) **e** o seed de exemplo (`db/seed`:
+  usuários, doadores, beneficiários, pontos de coleta). Use no banco de desenvolvimento do Neon.
+- **`prod`** (ou qualquer valor diferente de `dev`) — a Flyway aplica **somente o schema**;
+  nenhum dado é inserido na primeira subida. Os usuários/dados são cadastrados manualmente.
+
+Assim, o banco de **produção** do Neon sobe limpo, e o de **desenvolvimento** já vem populado
+para testes. (A configuração de limite de retirada é criada automaticamente pela aplicação quando
+necessária, então produção funciona sem seed.)
 
 ## 📚 Funcionalidades
 

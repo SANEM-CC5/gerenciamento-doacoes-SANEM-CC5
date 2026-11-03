@@ -85,7 +85,7 @@ Colunas:
 O domínio de `beneficiary_status` passa a incluir `INACTIVE`:
 `ENUM('PENDING', 'APPROVED', 'REJECTED', 'INACTIVE')`.
 
-> Observação: o diagrama deve refletir o esquema **realmente implementado** (MySQL). A tabela
+> Observação: o diagrama deve refletir o esquema **realmente implementado** (PostgreSQL/NeonDB). A tabela
 > `beneficiary` **não** possui as colunas `address`, `data_nascimento`, `sexo` ou
 > `composicao_familiar` (ver `docs/database/Tabelas e Relacionamentos - DDL.sql`, já alinhado ao
 > código).
