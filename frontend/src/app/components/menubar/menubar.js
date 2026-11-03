@@ -5,6 +5,7 @@ import Image from 'next/image';
 import authService from '../../../services/authService';
 import { useRouter } from 'next/navigation';
 import { useNotification } from '../../../components/notifications/NotificationProvider';
+import NotificationBell from '../../../components/notifications/NotificationBell';
 
 export default function MenuBar({ hasNotification }) {
   const [userName, setUserName] = useState('Usuário');
@@ -36,8 +37,7 @@ export default function MenuBar({ hasNotification }) {
           <span className={styles.userName}>{userName}</span>
           <span className={styles.arrowDown}>▼</span>
         </div>
-        <div className={styles.iconWrapper} style={{ position: 'relative' }}>
-        </div>
+        <NotificationBell />
         <div className={styles.iconWrapper} onClick={handleLogout} title="Sair">
           <LogoutIcon />
         </div>

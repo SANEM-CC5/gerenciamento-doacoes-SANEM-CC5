@@ -4,7 +4,9 @@ public record ItemDTO(
         Long itemId,
         String description,
         Long stockQuantity,
-        String tagCode
+        String tagCode,
+        Long minimumStock,
+        boolean lowStock
 )
 {
 }

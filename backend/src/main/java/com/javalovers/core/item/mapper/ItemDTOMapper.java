@@ -13,7 +13,9 @@ public class ItemDTOMapper {
                 item.getItemId(),
                 item.getDescription(),
                 item.getStockQuantity(),
-                item.getTagCode()
+                item.getTagCode(),
+                item.getMinimumStock(),
+                item.isLowStock()
         );
     }
 }

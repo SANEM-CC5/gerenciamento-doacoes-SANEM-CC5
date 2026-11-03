@@ -94,10 +94,27 @@ CREATE TABLE item (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     description VARCHAR(200) NOT NULL,
     stock_quantity INT NOT NULL DEFAULT 0,
+    minimum_stock INT NULL DEFAULT NULL,           -- RF19 (migration V10); NULL = sem alerta
     tag_code VARCHAR(64),
     deleted_at TIMESTAMP(6) NULL,
     UNIQUE KEY uq_item_code (tag_code),
-    CHECK (stock_quantity >= 0)
+    CHECK (stock_quantity >= 0),
+    CONSTRAINT chk_item_minimum_stock CHECK (minimum_stock IS NULL OR minimum_stock >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Alertas de estoque mínimo (migration V10 – RF19).
+-- No máximo um alerta OPEN por item; vira RESOLVED quando o saldo volta a ficar acima do mínimo.
+CREATE TABLE stock_alert (
+    stock_alert_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    item_id INT NOT NULL,
+    stock_quantity INT NOT NULL,
+    minimum_stock INT NOT NULL,
+    status ENUM('OPEN', 'RESOLVED') NOT NULL DEFAULT 'OPEN',
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    resolved_at DATETIME(6) NULL,
+    CONSTRAINT fk_stock_alert_item FOREIGN KEY (item_id) REFERENCES item(item_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    INDEX idx_stock_alert_item_status (item_id, status)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Livro-razão de movimentações de estoque (migration V3)
@@ -214,6 +231,27 @@ CREATE TABLE collection_point (
     operating_hours VARCHAR(255),
     phone VARCHAR(30),
     deleted_at TIMESTAMP(6) NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ==========================================
+-- 7.1 NOTIFICAÇÕES DE USUÁRIOS (RF19 - estoque mínimo) - migration V10
+-- Uma linha por usuário autorizado (perfis configurados em
+-- sanem.notifications.low-stock-profiles; padrão Administrator e Attendant).
+-- ==========================================
+CREATE TABLE notification (
+    notification_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    stock_alert_id BIGINT NULL,
+    type ENUM('LOW_STOCK') NOT NULL,
+    title VARCHAR(150) NOT NULL,
+    message VARCHAR(500) NOT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    read_at DATETIME(6) NULL,
+    CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES app_user(user_id)
+        ON UPDATE RESTRICT ON DELETE CASCADE,
+    CONSTRAINT fk_notification_stock_alert FOREIGN KEY (stock_alert_id) REFERENCES stock_alert(stock_alert_id)
+        ON UPDATE RESTRICT ON DELETE SET NULL,
+    INDEX idx_notification_user_read (user_id, read_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ==========================================

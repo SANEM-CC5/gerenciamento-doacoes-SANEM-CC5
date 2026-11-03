@@ -16,6 +16,7 @@ public class ItemCreateMapper {
             tag = null;
         }
         item.setTagCode(tag);
+        item.setMinimumStock(itemFormDTO.minimumStock());
 
         return item;
     }

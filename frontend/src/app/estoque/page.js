@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import apiService from '../../services/api';
 import { mapItemFromBackend, mapItemToBackend } from '../../services/dataMapper';
 import { useApiList } from '../../hooks/useApi';
-import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaExclamationTriangle } from 'react-icons/fa';
 import { useNotification } from '../../components/notifications/NotificationProvider';
 import ConfirmationModal from '../../components/confirmation/ConfirmationModal';
 
@@ -16,10 +16,12 @@ export default function EstoquePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [novoProduto, setNovoProduto] = useState({ nome: '', quantidade: '', tagCode: '' });
-  const [editProduto, setEditProduto] = useState({ nome: '', quantidade: '', tagCode: '' });
+  const emptyProduto = { nome: '', quantidade: '', tagCode: '', estoqueMinimo: '' };
+  const [novoProduto, setNovoProduto] = useState(emptyProduto);
+  const [editProduto, setEditProduto] = useState(emptyProduto);
   const [editingItem, setEditingItem] = useState(null);
-  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '' });
+  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '', lowStock: false });
+  const [lowStockCount, setLowStockCount] = useState(0);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const router = useRouter();
 
@@ -37,6 +39,39 @@ export default function EstoquePage() {
     ? itemsRaw.map(mapItemFromBackend)
     : [];
 
+  // Link vindo do sino de notificações: /estoque?estoqueBaixo=1
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('estoqueBaixo') === '1') {
+      setFilters(prev => ({ ...prev, lowStock: true }));
+    }
+  }, []);
+
+  // RF19: total de itens no/abaixo do estoque mínimo (independe dos filtros da tabela)
+  async function refreshLowStockCount() {
+    try {
+      const lowItems = await apiService.getLowStockItems();
+      setLowStockCount(Array.isArray(lowItems) ? lowItems.length : 0);
+    } catch {
+      setLowStockCount(0);
+    }
+  }
+
+  function buildActiveFilters() {
+    const activeFilters = {};
+    if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
+    if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
+    if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
+    if (filters.lowStock) activeFilters.lowStock = true;
+    return activeFilters;
+  }
+
+  async function reloadItems() {
+    await loadDataRaw(buildActiveFilters());
+    refreshLowStockCount();
+  }
+
   useEffect(() => {
     const handler = setTimeout(() => {
       setDebouncedSearch(filters.searchTerm);
@@ -46,16 +81,11 @@ export default function EstoquePage() {
   }, [filters.searchTerm]);
 
   useEffect(() => {
-    const activeFilters = {};
-    if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
-    if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
-    if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
-
-    loadDataRaw(activeFilters).catch(err => {
+    reloadItems().catch(err => {
       console.error("Erro ao carregar itens filtrados:", err);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity]);
+  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity, filters.lowStock]);
 
   async function handleAddProduto(e) {
     e.preventDefault();
@@ -65,13 +95,14 @@ export default function EstoquePage() {
       const itemData = {
         description: novoProduto.nome || '',
         stockQuantity: Number(novoProduto.quantidade) || 0,
-        tagCode: novoProduto.tagCode?.trim() ? novoProduto.tagCode.trim() : null
+        tagCode: novoProduto.tagCode?.trim() ? novoProduto.tagCode.trim() : null,
+        minimumStock: novoProduto.estoqueMinimo === '' ? null : Number(novoProduto.estoqueMinimo)
       };
       
       await apiService.createItem(itemData);
-      await loadDataRaw();
+      await reloadItems();
       
-      setNovoProduto({ nome: '', quantidade: '', tagCode: '' });
+      setNovoProduto(emptyProduto);
       setShowAddModal(false);
       showNotification("Produto adicionado com sucesso!", "success");
     } catch (err) {
@@ -84,7 +115,7 @@ export default function EstoquePage() {
     
     try {
       await apiService.deleteItem(itemToDelete.id);
-      await loadDataRaw();
+      await reloadItems();
       setItemToDelete(null);
       showNotification("Produto excluído com sucesso!", "success");
     } catch (err) {
@@ -100,7 +131,8 @@ export default function EstoquePage() {
     setEditProduto({
       nome: item.nome || '',
       quantidade: item.quantidade || '',
-      tagCode: item.tagCode || ''
+      tagCode: item.tagCode || '',
+      estoqueMinimo: item.estoqueMinimo ?? ''
     });
     setEditingItem(item);
     setShowEditModal(true);
@@ -115,13 +147,14 @@ export default function EstoquePage() {
       const itemData = mapItemToBackend({
         nome: editProduto.nome || '',
         quantidade: Number(editProduto.quantidade) || 0,
-        tagCode: editProduto.tagCode
+        tagCode: editProduto.tagCode,
+        estoqueMinimo: editProduto.estoqueMinimo
       });
       
       await apiService.updateItem(editingItem.id, itemData);
-      await loadDataRaw();
+      await reloadItems();
       
-      setEditProduto({ nome: '', quantidade: '', tagCode: '' });
+      setEditProduto(emptyProduto);
       setShowEditModal(false);
       setEditingItem(null);
       showNotification("Produto atualizado com sucesso!", "success");
@@ -225,6 +258,26 @@ export default function EstoquePage() {
 
           <div className={styles.decoracao}></div>
 
+          {lowStockCount > 0 && (
+            <div className={styles.lowStockBanner} role="status">
+              <FaExclamationTriangle aria-hidden="true" />
+              <span>
+                {lowStockCount === 1
+                  ? '1 item está no estoque mínimo ou abaixo dele.'
+                  : `${lowStockCount} itens estão no estoque mínimo ou abaixo dele.`}
+              </span>
+              {!filters.lowStock && (
+                <button
+                  type="button"
+                  className={styles.lowStockBannerButton}
+                  onClick={() => setFilters(prev => ({ ...prev, lowStock: true }))}
+                >
+                  Ver itens
+                </button>
+              )}
+            </div>
+          )}
+
           <div className={styles.filtersContainer}>
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
@@ -252,10 +305,18 @@ export default function EstoquePage() {
                 onChange={(e) => setFilters(prev => ({ ...prev, maxQuantity: e.target.value }))}
               />
             </div>
+            <label className={styles.lowStockFilter}>
+              <input
+                type="checkbox"
+                checked={filters.lowStock}
+                onChange={(e) => setFilters(prev => ({ ...prev, lowStock: e.target.checked }))}
+              />
+              Somente estoque baixo
+            </label>
             <button 
               className={`${styles.cancelButton} ${styles.clearFilterButton}`} 
               onClick={() => {
-                setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '' });
+                setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '', lowStock: false });
                 setDebouncedSearch('');
               }}
             >
@@ -270,6 +331,7 @@ export default function EstoquePage() {
                   <th>ID</th>
                   <th>Nome</th>
                   <th>Quantidade</th>
+                  <th>Estoque mínimo</th>
                   <th>Código/Tag</th>
                   <th>Ações</th>
                 </tr>
@@ -277,22 +339,36 @@ export default function EstoquePage() {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className={styles.loadingMessage}>Carregando...</td>
+                    <td colSpan={6} className={styles.loadingMessage}>Carregando...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={5} className={styles.errorMessage}>{error}</td>
+                    <td colSpan={6} className={styles.errorMessage}>{error}</td>
                   </tr>
                 ) : mockEstoque.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className={styles.noDataMessage}>Nenhum produto cadastrado ainda.</td>
+                    <td colSpan={6} className={styles.noDataMessage}>{filters.lowStock ? 'Nenhum item com estoque baixo.' : 'Nenhum produto cadastrado ainda.'}</td>
                   </tr>
                 ) : (
                   mockEstoque.map(item => (
-                    <tr key={item.id}>
+                    <tr key={item.id} className={item.estoqueBaixo ? styles.lowStockRow : undefined}>
                       <td>{item.id}</td>
                       <td>{item.nome}</td>
-                      <td>{item.quantidade}</td>
+                      <td>
+                        {item.quantidade}
+                        {item.estoqueBaixo && (
+                          <span className={styles.lowStockBadge} title="Saldo igual ou abaixo do estoque mínimo">
+                            <FaExclamationTriangle aria-hidden="true" /> Estoque baixo
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        {item.estoqueMinimo !== null && item.estoqueMinimo !== undefined ? (
+                          item.estoqueMinimo
+                        ) : (
+                          <span style={{ color: '#999', fontStyle: 'italic' }}>Não definido</span>
+                        )}
+                      </td>
                       <td>
                         {item.tagCode ? (
                           <span style={{ fontWeight: '500' }}>{item.tagCode}</span>
@@ -373,6 +449,21 @@ export default function EstoquePage() {
                   onChange={e => setNovoProduto({ ...novoProduto, quantidade: e.target.value })} 
                 />
               </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="estoqueMinimo">Estoque mínimo (opcional)</label>
+                <input 
+                  id="estoqueMinimo"
+                  type="number" 
+                  min={0}
+                  value={novoProduto.estoqueMinimo} 
+                  onChange={e => setNovoProduto({ ...novoProduto, estoqueMinimo: e.target.value })} 
+                  placeholder="Ex: 5 — avisa quando o saldo chegar a esse valor"
+                  aria-describedby="estoqueMinimoHelp"
+                />
+                <small id="estoqueMinimoHelp" className={styles.fieldHelp}>
+                  Administradores e atendentes serão notificados quando a quantidade atingir ou ficar abaixo deste valor. Deixe em branco para não monitorar.
+                </small>
+              </div>
               <div className={styles.modalActions}>
                 <button 
                   type="button" 
@@ -430,6 +521,21 @@ export default function EstoquePage() {
                   value={editProduto.quantidade} 
                   onChange={e => setEditProduto({ ...editProduto, quantidade: e.target.value })} 
                 />
+              </div>
+              <div className={styles.formGroup}>
+                <label htmlFor="editEstoqueMinimo">Estoque mínimo (opcional)</label>
+                <input 
+                  id="editEstoqueMinimo"
+                  type="number" 
+                  min={0}
+                  value={editProduto.estoqueMinimo} 
+                  onChange={e => setEditProduto({ ...editProduto, estoqueMinimo: e.target.value })} 
+                  placeholder="Ex: 5 — avisa quando o saldo chegar a esse valor"
+                  aria-describedby="editEstoqueMinimoHelp"
+                />
+                <small id="editEstoqueMinimoHelp" className={styles.fieldHelp}>
+                  Administradores e atendentes serão notificados quando a quantidade atingir ou ficar abaixo deste valor. Deixe em branco para não monitorar.
+                </small>
               </div>
               <div className={styles.modalActions}>
                 <button 
