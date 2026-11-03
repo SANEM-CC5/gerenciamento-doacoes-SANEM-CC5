@@ -4,7 +4,12 @@ public record ItemDTO(
         Long itemId,
         String description,
         Long stockQuantity,
-        String tagCode
+        String tagCode,
+        String size,
+        String gender,
+        String type,
+        String conditionStatus,
+        String location
 )
 {
 }

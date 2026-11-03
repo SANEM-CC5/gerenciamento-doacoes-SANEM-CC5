@@ -22,7 +22,12 @@ export const mapItemToBackend = (frontendItem) => {
     return {
         description: frontendItem.nome || frontendItem.descricao || "",
         stockQuantity: frontendItem.quantidade || 0,
-        tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null
+        tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null,
+        size: frontendItem.size || null,
+        gender: frontendItem.gender || null,
+        type: frontendItem.type || null,
+        conditionStatus: frontendItem.conditionStatus || null,
+        location: frontendItem.location || null
     }
 }
 
@@ -32,7 +37,12 @@ export const mapItemFromBackend = (backendItem) => {
         nome: backendItem.description,
         descricao: backendItem.description,
         quantidade: backendItem.stockQuantity,
-        tagCode: backendItem.tagCode || null
+        tagCode: backendItem.tagCode || null,
+        size: backendItem.size || '',
+        gender: backendItem.gender || '',
+        type: backendItem.type || '',
+        conditionStatus: backendItem.conditionStatus || '',
+        location: backendItem.location || ''
     }
 }
 

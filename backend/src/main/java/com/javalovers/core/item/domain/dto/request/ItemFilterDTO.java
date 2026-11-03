@@ -3,6 +3,11 @@ package com.javalovers.core.item.domain.dto.request;
 public record ItemFilterDTO(
         String searchTerm,
         Long minQuantity,
-        Long maxQuantity
+        Long maxQuantity,
+        String size,
+        String gender,
+        String type,
+        String conditionStatus,
+        String location
 ) {
 }

@@ -81,6 +81,11 @@ CREATE TABLE item (
     description VARCHAR(200) NOT NULL,
     stock_quantity INT NOT NULL DEFAULT 0,
     tag_code VARCHAR(64),
+    size VARCHAR(30),
+    gender VARCHAR(30),
+    type VARCHAR(80),
+    condition_status VARCHAR(40),
+    location VARCHAR(120),
     deleted_at TIMESTAMP(6) NULL,
 
     UNIQUE KEY uq_item_code (tag_code),

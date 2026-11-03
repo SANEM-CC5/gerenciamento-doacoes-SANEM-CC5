@@ -35,6 +35,21 @@ public class Item implements SoftDeletable {
     @Column(name = "tag_code", unique = true)
     private String tagCode;
 
+    @Column(name = "size", length = 30)
+    private String size;
+
+    @Column(name = "gender", length = 30)
+    private String gender;
+
+    @Column(name = "type", length = 80)
+    private String type;
+
+    @Column(name = "condition_status", length = 40)
+    private String conditionStatus;
+
+    @Column(name = "location", length = 120)
+    private String location;
+
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
 }

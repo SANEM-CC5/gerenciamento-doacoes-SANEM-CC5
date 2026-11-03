@@ -8,7 +8,7 @@ import apiService from '../../services/api';
 import authService from '../../services/authService';
 import { useNotification } from '../../components/notifications/NotificationProvider';
 import { mapUserFromBackend, mapUserToBackend } from '../../services/dataMapper';
-import { FaPlus, FaTrash, FaEdit, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaEdit, FaEye, FaEyeSlash, FaFilter } from 'react-icons/fa';
 import ConfirmationModal from '../../components/confirmation/ConfirmationModal';
 
 export default function UsuariosPage() {
@@ -42,6 +42,8 @@ export default function UsuariosPage() {
   const [changePassword, setChangePassword] = useState(false);
   const [showAddPassword, setShowAddPassword] = useState(false);
   const [showEditPassword, setShowEditPassword] = useState(false);
+  const [userFilters, setUserFilters] = useState({ searchTerm: '', profile: '', status: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   useEffect(() => {
     const initialize = async () => {
@@ -117,6 +119,15 @@ export default function UsuariosPage() {
     }
     return name; // Retorna o nome original se não for reconhecido
   };
+
+  const filteredUsers = users.filter((user) => {
+    const searchTerm = userFilters.searchTerm.toLowerCase();
+    const matchesSearch = !searchTerm ||
+      (user.nomeCompleto || '').toLowerCase().includes(searchTerm);
+    const matchesProfile = !userFilters.profile || translateProfileName(user.perfil) === userFilters.profile;
+    const matchesStatus = !userFilters.status || user.status === userFilters.status;
+    return matchesSearch && matchesProfile && matchesStatus;
+  });
 
   const loadProfiles = async () => {
     try {
@@ -372,6 +383,54 @@ export default function UsuariosPage() {
               </button>
             </div>
           )}
+          <div className={styles.filtersContainer}>
+            <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
+              <input
+                type="text"
+                placeholder="Filtrar por nome..."
+                value={userFilters.searchTerm}
+                onChange={(e) => setUserFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
+              />
+            </div>
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-user-filters"
+            >
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
+            </button>
+            {showAdvancedFilters && (
+              <div id="advanced-user-filters" className={styles.advancedFiltersPanel}>
+                <select
+                  value={userFilters.profile}
+                  onChange={(e) => setUserFilters(prev => ({ ...prev, profile: e.target.value }))}
+                >
+                  <option value="">Todos os perfis</option>
+                  <option value="Administrador">Administrador</option>
+                  <option value="Atendente">Atendente</option>
+                  <option value="Avaliador">Avaliador</option>
+                </select>
+                <select
+                  value={userFilters.status}
+                  onChange={(e) => setUserFilters(prev => ({ ...prev, status: e.target.value }))}
+                >
+                  <option value="">Todos os status</option>
+                  <option value="ACTIVE">Ativo</option>
+                  <option value="INACTIVE">Inativo</option>
+                </select>
+                <button
+                  type="button"
+                  className={styles.clearFilterButton}
+                  onClick={() => setUserFilters({ searchTerm: '', profile: '', status: '' })}
+                >
+                  Limpar
+                </button>
+              </div>
+            )}
+          </div>
           {isAdmin && (
           <div className={styles.tableWrapper}>
             <table className={styles.beneficiariosTable}>
@@ -389,12 +448,12 @@ export default function UsuariosPage() {
                   <tr>
                     <td colSpan={5} className={styles.loadingMessage}>Carregando...</td>
                   </tr>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <tr>
                     <td colSpan={5} className={styles.noDataMessage}>Nenhum usuário cadastrado ainda.</td>
                   </tr>
                 ) : (
-                  users.map((user) => (
+                  filteredUsers.map((user) => (
                     <tr key={user.id}>
                       <td>{user.nomeCompleto}</td>
                       <td>{user.email}</td>

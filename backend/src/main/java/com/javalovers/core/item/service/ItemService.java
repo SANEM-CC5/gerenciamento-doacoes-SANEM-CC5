@@ -150,9 +150,34 @@ public class ItemService {
             return predicates;
         };
 
+        Specification<Item> attributeSpecification = (root, query, criteriaBuilder) -> {
+            var predicates = criteriaBuilder.conjunction();
+            if (hasValue(itemFilterDTO.size())) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("size"), itemFilterDTO.size()));
+            }
+            if (hasValue(itemFilterDTO.gender())) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("gender"), itemFilterDTO.gender()));
+            }
+            if (hasValue(itemFilterDTO.type())) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("type"), itemFilterDTO.type()));
+            }
+            if (hasValue(itemFilterDTO.conditionStatus())) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("conditionStatus"), itemFilterDTO.conditionStatus()));
+            }
+            if (hasValue(itemFilterDTO.location())) {
+                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("location"), itemFilterDTO.location()));
+            }
+            return predicates;
+        };
+
         return Specification.where(searchSpecification)
                 .and(quantitySpecification)
+                .and(attributeSpecification)
                 .and(notDeletedSpecification);
+    }
+
+    private boolean hasValue(String value) {
+        return value != null && !value.trim().isEmpty();
     }
 
     public Page<ItemDTO> generateItemDTOPage(Page<Item> itemPage) {

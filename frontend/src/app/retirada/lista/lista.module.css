@@ -136,6 +136,18 @@
     width: 150px;
 }
 
+.dateRangeFilter {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  grid-column: span 2;
+}
+
+.dateRangeFilter .filterGroupDate {
+  flex: 1;
+  min-width: 0;
+}
+
 .dateSeparator {
   font-weight: normal;
   color: var(--color-text-light, #666);
@@ -143,8 +155,44 @@
 }
 
 .filterGroupText {
-  flex: 1;
-  min-width: 180px;
+  flex: 0 0 calc(50% - 6px);
+  min-width: 280px;
+}
+
+.advancedFiltersButton {
+  width: auto;
+  height: 42px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 2px solid var(--color-border, #ccc);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-text);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.advancedFiltersButton span {
+  color: var(--color-primary);
+  font-size: 0.9rem;
+}
+
+.advancedFiltersPanel {
+  flex-basis: 100%;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border-light, #ddd);
+  border-radius: 10px;
+  background: var(--color-bg-alt, #f8fafc);
+}
+
+.advancedFiltersPanel .formGroup {
+  width: auto;
 }
 
 .clearFilterButton {
@@ -385,6 +433,15 @@
   /* Transformação da tabela para "cartões" em telas pequenas */
   .beneficiariosTable {
     border-spacing: 0; /* Remove espaçamento entre linhas quando vira cartão */
+  }
+  .advancedFiltersButton { width: auto; align-self: flex-start; }
+  .advancedFiltersPanel {
+    grid-template-columns: 1fr;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  .dateRangeFilter {
+    grid-column: auto;
   }
   .beneficiariosTable thead {
     display: none; /* Esconde o cabeçalho da tabela */

@@ -5,7 +5,7 @@ import Navigation from "../../components/navegation/navegation"
 import styles from "./lista.module.css"
 import apiService from "../../../services/api"
 import { useNotification } from "../../../components/notifications/NotificationProvider"
-import { FaPlus, FaTrash, FaMinus, FaChevronDown, FaTimes } from "react-icons/fa"
+import { FaPlus, FaTrash, FaMinus, FaChevronDown, FaTimes, FaFilter } from "react-icons/fa"
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal"
 import {
     mapDonorFromBackend,
@@ -25,7 +25,7 @@ export default function ListaDoacoesPage() {
         message: "",
         title: ""
     })
-    
+
     // Modais e estados de Adição
     const [showAddModal, setShowAddModal] = useState(false)
     const [donors, setDonors] = useState([])
@@ -40,7 +40,7 @@ export default function ListaDoacoesPage() {
     // ==========================================
     // LÓGICA DE FILTROS APRIMORADA
     // ==========================================
-    
+
     // 'filters' guarda os valores que realmente vão para o backend
     const [filters, setFilters] = useState({
         startDate: "",
@@ -56,6 +56,7 @@ export default function ListaDoacoesPage() {
         attendantName: "",
         itemName: ""
     })
+    const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
 
     const [activeDropdown, setActiveDropdown] = useState(null)
     const [filterOptions, setFilterOptions] = useState({
@@ -359,7 +360,7 @@ export default function ListaDoacoesPage() {
             <Navigation />
             <div className={styles.contentWrapper}>
                 <div className={styles.listContainer}>
-                    
+
                     <div className={styles.pageHeader}>
                         <h1 className={styles.titulo}>Doações Registradas</h1>
                         <button className={styles.addButton} onClick={handleAdd} title="Registrar Nova Doação">
@@ -370,76 +371,56 @@ export default function ListaDoacoesPage() {
 
                     {/* BARRA DE FILTROS ENVOLVIDA PELA REF */}
                     <div className={styles.filtersContainer} ref={dropdownRef}>
-                        <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
-                            <input 
-                                type="date" 
-                                name="startDate"
-                                value={filters.startDate}
-                                onChange={handleDateChange}
-                                title="Data Inicial"
-                            />
-                        </div>
-                        <span className={styles.dateSeparator}>até</span>
-                        <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
-                            <input 
-                                type="date" 
-                                name="endDate"
-                                value={filters.endDate}
-                                onChange={handleDateChange}
-                                title="Data Final"
-                            />
-                        </div>
-
-                        {/* SELECT COM PESQUISA: Doador */}
-                        <div className={`${styles.formGroup} ${styles.filterGroupText}`} style={{ position: "relative" }}>
-                            <input 
+                        <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
+                            <input
                                 type="text"
-                                placeholder="Filtrar por Doador..." 
+                                placeholder="Filtrar por nome do doador..."
                                 value={inputValues.donorName}
-                                onChange={(e) => handleTextTyping("donorName", e.target.value)}
-                                onClick={() => setActiveDropdown("donorName")}
-                                autoComplete="off"
-                                style={{ paddingRight: "60px" }}
+                                onChange={(e) => {
+                                    const value = e.target.value
+                                    setInputValues(prev => ({ ...prev, donorName: value }))
+                                    setFilters(prev => ({ ...prev, donorName: value }))
+                                }}
                             />
-                            {inputValues.donorName && (
-                                <FaTimes 
-                                    className={styles.clearIcon}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleOptionSelect("donorName", "");
-                                    }}
-                                    title="Limpar Doador"
+                        </div>
+                        <button
+                            type="button"
+                            className={styles.advancedFiltersButton}
+                            onClick={() => setShowAdvancedFilters(prev => !prev)}
+                            aria-expanded={showAdvancedFilters}
+                            aria-controls="advanced-donation-filters"
+                        >
+                            <FaFilter aria-hidden="true" />
+                            <span>Avançado</span>
+                        </button>
+                        {showAdvancedFilters && <div id="advanced-donation-filters" className={styles.advancedFiltersPanel}>
+                        <div className={styles.dateRangeFilter}>
+                            <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+                                <input
+                                    type="date"
+                                    name="startDate"
+                                    value={filters.startDate}
+                                    onChange={handleDateChange}
+                                    title="Data Inicial"
                                 />
-                            )}
-                            <FaChevronDown 
-                                className={styles.selectIcon} 
-                                style={{ transform: activeDropdown === "donorName" ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }} 
-                            />
-                            {activeDropdown === "donorName" && (
-                                <div className={styles.filterDropdown}>
-                                    {filterOptions.donors
-                                        .filter(opt => opt.toLowerCase().includes(inputValues.donorName.toLowerCase()))
-                                        .map((opt, idx) => (
-                                            <div 
-                                                key={idx} 
-                                                className={styles.filterDropdownItem}
-                                                onClick={() => handleOptionSelect("donorName", opt)}
-                                            >
-                                                {opt}
-                                            </div>
-                                        ))}
-                                    {filterOptions.donors.filter(opt => opt.toLowerCase().includes(inputValues.donorName.toLowerCase())).length === 0 && (
-                                        <div className={styles.filterDropdownItemEmpty}>Nenhum doador encontrado</div>
-                                    )}
-                                </div>
-                            )}
+                            </div>
+                            <span className={styles.dateSeparator}>até</span>
+                            <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+                                <input
+                                    type="date"
+                                    name="endDate"
+                                    value={filters.endDate}
+                                    onChange={handleDateChange}
+                                    title="Data Final"
+                                />
+                            </div>
                         </div>
 
                         {/* SELECT COM PESQUISA: Atendente */}
                         <div className={`${styles.formGroup} ${styles.filterGroupText}`} style={{ position: "relative" }}>
-                            <input 
+                            <input
                                 type="text"
-                                placeholder="Filtrar por Atendente..." 
+                                placeholder="Filtrar por Atendente..."
                                 value={inputValues.attendantName}
                                 onChange={(e) => handleTextTyping("attendantName", e.target.value)}
                                 onClick={() => setActiveDropdown("attendantName")}
@@ -447,7 +428,7 @@ export default function ListaDoacoesPage() {
                                 style={{ paddingRight: "60px" }}
                             />
                             {inputValues.attendantName && (
-                                <FaTimes 
+                                <FaTimes
                                     className={styles.clearIcon}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -456,17 +437,17 @@ export default function ListaDoacoesPage() {
                                     title="Limpar Atendente"
                                 />
                             )}
-                            <FaChevronDown 
-                                className={styles.selectIcon} 
-                                style={{ transform: activeDropdown === "attendantName" ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }} 
+                            <FaChevronDown
+                                className={styles.selectIcon}
+                                style={{ transform: activeDropdown === "attendantName" ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }}
                             />
                             {activeDropdown === "attendantName" && (
                                 <div className={styles.filterDropdown}>
                                     {filterOptions.attendants
                                         .filter(opt => opt.toLowerCase().includes(inputValues.attendantName.toLowerCase()))
                                         .map((opt, idx) => (
-                                            <div 
-                                                key={idx} 
+                                            <div
+                                                key={idx}
                                                 className={styles.filterDropdownItem}
                                                 onClick={() => handleOptionSelect("attendantName", opt)}
                                             >
@@ -482,9 +463,9 @@ export default function ListaDoacoesPage() {
 
                         {/* SELECT COM PESQUISA: Item */}
                         <div className={`${styles.formGroup} ${styles.filterGroupText}`} style={{ position: "relative" }}>
-                            <input 
+                            <input
                                 type="text"
-                                placeholder="Filtrar por Item..." 
+                                placeholder="Filtrar por Item..."
                                 value={inputValues.itemName}
                                 onChange={(e) => handleTextTyping("itemName", e.target.value)}
                                 onClick={() => setActiveDropdown("itemName")}
@@ -492,7 +473,7 @@ export default function ListaDoacoesPage() {
                                 style={{ paddingRight: "60px" }}
                             />
                             {inputValues.itemName && (
-                                <FaTimes 
+                                <FaTimes
                                     className={styles.clearIcon}
                                     onClick={(e) => {
                                         e.stopPropagation();
@@ -501,17 +482,17 @@ export default function ListaDoacoesPage() {
                                     title="Limpar Item"
                                 />
                             )}
-                            <FaChevronDown 
-                                className={styles.selectIcon} 
-                                style={{ transform: activeDropdown === "itemName" ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }} 
+                            <FaChevronDown
+                                className={styles.selectIcon}
+                                style={{ transform: activeDropdown === "itemName" ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }}
                             />
                             {activeDropdown === "itemName" && (
                                 <div className={styles.filterDropdown}>
                                     {filterOptions.items
                                         .filter(opt => opt.toLowerCase().includes(inputValues.itemName.toLowerCase()))
                                         .map((opt, idx) => (
-                                            <div 
-                                                key={idx} 
+                                            <div
+                                                key={idx}
                                                 className={styles.filterDropdownItem}
                                                 onClick={() => handleOptionSelect("itemName", opt)}
                                             >
@@ -525,13 +506,14 @@ export default function ListaDoacoesPage() {
                             )}
                         </div>
 
-                        <button 
-                            className={`${styles.cancelButton} ${styles.clearFilterButton}`} 
+                        <button
+                            className={`${styles.cancelButton} ${styles.clearFilterButton}`}
                             onClick={clearFilters}
                             title="Limpar Filtros"
                         >
                             Limpar
                         </button>
+                        </div>}
                     </div>
                     {/* FIM BARRA DE FILTROS */}
 

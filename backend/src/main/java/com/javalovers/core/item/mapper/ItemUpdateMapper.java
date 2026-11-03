@@ -14,5 +14,10 @@ public class ItemUpdateMapper {
             tag = null;
         }
         item.setTagCode(tag);
+        item.setSize(itemFormDTO.size());
+        item.setGender(itemFormDTO.gender());
+        item.setType(itemFormDTO.type());
+        item.setConditionStatus(itemFormDTO.conditionStatus());
+        item.setLocation(itemFormDTO.location());
     }
 }

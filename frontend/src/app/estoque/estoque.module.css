@@ -115,18 +115,98 @@
     background: #fff;
 }
 
+.filtersContainer select {
+    height: 42px;
+    padding: 6px 10px;
+    border: 2px solid var(--color-border, #ccc);
+    border-radius: 8px;
+    background: #fff;
+    font-size: 0.9rem;
+}
+
+.itemAttributesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.itemAttributesGrid select,
+.itemAttributesGrid input {
+  width: 100%;
+  height: 42px;
+  padding: 6px 12px;
+  border: 2px solid var(--color-border, #ccc);
+  border-radius: 8px;
+  box-sizing: border-box;
+}
+
+@media (max-width: 600px) {
+  .itemAttributesGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
 .filtersContainer input:focus {
     outline: none;
     border-color: var(--color-primary, #1976d2);
 }
 
 .filterGroupText {
-    flex: 1;
-    min-width: 180px;
+    flex: 0 0 calc(50% - 6px);
+    min-width: 280px;
 }
 
 .filterGroupNumber {
     width: 140px;
+}
+
+.advancedFiltersButton {
+    width: auto;
+    height: 42px;
+    padding: 0 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 2px solid var(--color-border, #ccc);
+    border-radius: 8px;
+    background: #fff;
+    color: var(--color-text);
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.advancedFiltersButton:hover,
+.advancedFiltersButton[aria-expanded="true"] {
+    border-color: var(--color-primary);
+    background: var(--color-bg-alt, #f0f4f8);
+}
+
+.advancedFiltersButton span {
+    color: var(--color-primary);
+    font-size: 0.9rem;
+    line-height: 1;
+}
+
+.advancedFiltersPanel {
+    flex-basis: 100%;
+    padding: 16px;
+    border: 1px solid var(--color-border-light, #ddd);
+    border-radius: 10px;
+    background: var(--color-bg-alt, #f8fafc);
+}
+
+.advancedFiltersGrid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+    gap: 12px;
+    align-items: center;
+}
+
+.advancedFiltersGrid .formGroup {
+    width: auto;
 }
 
 .clearFilterButton {
@@ -158,6 +238,20 @@
     }
     .filterGroupText, .filterGroupNumber {
         width: 100%;
+    }
+    .advancedFiltersButton {
+        width: auto;
+        align-self: flex-start;
+    }
+    .filterGroupText {
+        min-width: 0;
+    }
+    .advancedFiltersPanel {
+        width: 100%;
+        box-sizing: border-box;
+    }
+    .advancedFiltersGrid {
+        grid-template-columns: 1fr;
     }
 }
 

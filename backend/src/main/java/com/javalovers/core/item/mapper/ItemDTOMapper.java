@@ -13,7 +13,12 @@ public class ItemDTOMapper {
                 item.getItemId(),
                 item.getDescription(),
                 item.getStockQuantity(),
-                item.getTagCode()
+                item.getTagCode(),
+                item.getSize(),
+                item.getGender(),
+                item.getType(),
+                item.getConditionStatus(),
+                item.getLocation()
         );
     }
 }

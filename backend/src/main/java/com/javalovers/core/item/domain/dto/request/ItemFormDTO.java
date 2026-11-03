@@ -10,6 +10,21 @@ public record ItemFormDTO(
         Long stockQuantity,
         
         @JsonProperty("tagCode")
-        String tagCode
+        String tagCode,
+
+        @JsonProperty("size")
+        String size,
+
+        @JsonProperty("gender")
+        String gender,
+
+        @JsonProperty("type")
+        String type,
+
+        @JsonProperty("conditionStatus")
+        String conditionStatus,
+
+        @JsonProperty("location")
+        String location
 ) {
 }

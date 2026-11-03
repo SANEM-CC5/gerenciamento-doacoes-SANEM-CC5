@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import apiService from "../../../services/api";
 import { mapDonorFromBackend, mapDonorToBackend } from "../../../services/dataMapper";
 import { useApiList } from "../../../hooks/useApi";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaFilter } from "react-icons/fa";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
 import { validateCPForCNPJ, validateEmail, validatePhone } from "../../../utils/validators";
@@ -33,6 +33,7 @@ export default function ListaDoadores() {
   // --- NOVOS ESTADOS PARA OS FILTROS ---
   const [filters, setFilters] = useState({ name: '', cpfCnpj: '', contact: '', email: '' });
   const [debouncedFilters, setDebouncedFilters] = useState({ name: '', cpfCnpj: '', contact: '', email: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const {
     data: doadoresRaw,
@@ -274,6 +275,17 @@ export default function ListaDoadores() {
                 onChange={handleFilterChange}
               />
             </div>
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-donor-filters"
+            >
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
+            </button>
+            {showAdvancedFilters && <div id="advanced-donor-filters" className={styles.advancedFiltersPanel}>
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
                 type="text" 
@@ -309,6 +321,7 @@ export default function ListaDoadores() {
             >
               Limpar
             </button>
+            </div>}
           </div>
 
           <div className={styles.tableWrapper}>

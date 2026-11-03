@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import apiService from '../../services/api';
 import { mapItemFromBackend, mapItemToBackend } from '../../services/dataMapper';
 import { useApiList } from '../../hooks/useApi';
-import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash } from 'react-icons/fa';
+import { FaPlus, FaPrint, FaTag, FaEdit, FaTrash, FaFilter } from 'react-icons/fa';
 import { useNotification } from '../../components/notifications/NotificationProvider';
 import ConfirmationModal from '../../components/confirmation/ConfirmationModal';
 
@@ -16,10 +16,12 @@ export default function EstoquePage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
-  const [novoProduto, setNovoProduto] = useState({ nome: '', quantidade: '', tagCode: '' });
-  const [editProduto, setEditProduto] = useState({ nome: '', quantidade: '', tagCode: '' });
+  const emptyItem = { nome: '', quantidade: '', tagCode: '', size: '', gender: '', type: '', conditionStatus: '', location: 'Medianeira' };
+  const [novoProduto, setNovoProduto] = useState(emptyItem);
+  const [editProduto, setEditProduto] = useState(emptyItem);
   const [editingItem, setEditingItem] = useState(null);
-  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '' });
+  const [filters, setFilters] = useState({ searchTerm: '', minQuantity: '', maxQuantity: '', size: '', gender: '', type: '', conditionStatus: '', location: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const router = useRouter();
 
@@ -50,12 +52,17 @@ export default function EstoquePage() {
     if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
     if (filters.minQuantity) activeFilters.minQuantity = filters.minQuantity;
     if (filters.maxQuantity) activeFilters.maxQuantity = filters.maxQuantity;
+    if (filters.size) activeFilters.size = filters.size;
+    if (filters.gender) activeFilters.gender = filters.gender;
+    if (filters.type) activeFilters.type = filters.type;
+    if (filters.conditionStatus) activeFilters.conditionStatus = filters.conditionStatus;
+    if (filters.location) activeFilters.location = filters.location;
 
     loadDataRaw(activeFilters).catch(err => {
       console.error("Erro ao carregar itens filtrados:", err);
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity]);
+  }, [debouncedSearch, filters.minQuantity, filters.maxQuantity, filters.size, filters.gender, filters.type, filters.conditionStatus, filters.location]);
 
   async function handleAddProduto(e) {
     e.preventDefault();
@@ -65,13 +72,18 @@ export default function EstoquePage() {
       const itemData = {
         description: novoProduto.nome || '',
         stockQuantity: Number(novoProduto.quantidade) || 0,
-        tagCode: novoProduto.tagCode?.trim() ? novoProduto.tagCode.trim() : null
+        tagCode: novoProduto.tagCode?.trim() ? novoProduto.tagCode.trim() : null,
+        size: novoProduto.size || null,
+        gender: novoProduto.gender || null,
+        type: novoProduto.type || null,
+        conditionStatus: novoProduto.conditionStatus || null,
+        location: novoProduto.location || null
       };
       
       await apiService.createItem(itemData);
       await loadDataRaw();
       
-      setNovoProduto({ nome: '', quantidade: '', tagCode: '' });
+      setNovoProduto(emptyItem);
       setShowAddModal(false);
       showNotification("Produto adicionado com sucesso!", "success");
     } catch (err) {
@@ -100,7 +112,12 @@ export default function EstoquePage() {
     setEditProduto({
       nome: item.nome || '',
       quantidade: item.quantidade || '',
-      tagCode: item.tagCode || ''
+      tagCode: item.tagCode || '',
+      size: item.size || '',
+      gender: item.gender || '',
+      type: item.type || '',
+      conditionStatus: item.conditionStatus || '',
+      location: item.location || ''
     });
     setEditingItem(item);
     setShowEditModal(true);
@@ -115,13 +132,18 @@ export default function EstoquePage() {
       const itemData = mapItemToBackend({
         nome: editProduto.nome || '',
         quantidade: Number(editProduto.quantidade) || 0,
-        tagCode: editProduto.tagCode
+        tagCode: editProduto.tagCode,
+        size: editProduto.size,
+        gender: editProduto.gender,
+        type: editProduto.type,
+        conditionStatus: editProduto.conditionStatus,
+        location: editProduto.location
       });
       
       await apiService.updateItem(editingItem.id, itemData);
       await loadDataRaw();
       
-      setEditProduto({ nome: '', quantidade: '', tagCode: '' });
+      setEditProduto(emptyItem);
       setShowEditModal(false);
       setEditingItem(null);
       showNotification("Produto atualizado com sucesso!", "success");
@@ -227,40 +249,81 @@ export default function EstoquePage() {
 
           <div className={styles.filtersContainer}>
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
-              <input 
+              <input
                 type="text" 
                 placeholder="Filtrar por nome ou código..." 
                 value={filters.searchTerm}
                 onChange={(e) => setFilters(prev => ({ ...prev, searchTerm: e.target.value }))}
               />
             </div>
-            <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
-              <input 
-                type="number" 
-                placeholder="Qtd Min." 
-                min="0"
-                value={filters.minQuantity}
-                onChange={(e) => setFilters(prev => ({ ...prev, minQuantity: e.target.value }))}
-              />
-            </div>
-            <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
-              <input 
-                type="number" 
-                placeholder="Qtd Máx." 
-                min="0"
-                value={filters.maxQuantity}
-                onChange={(e) => setFilters(prev => ({ ...prev, maxQuantity: e.target.value }))}
-              />
-            </div>
-            <button 
-              className={`${styles.cancelButton} ${styles.clearFilterButton}`} 
-              onClick={() => {
-                setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '' });
-                setDebouncedSearch('');
-              }}
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-stock-filters"
             >
-              Limpar
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
             </button>
+            {showAdvancedFilters && (
+              <div id="advanced-stock-filters" className={styles.advancedFiltersPanel}>
+                <div className={styles.advancedFiltersGrid}>
+                  <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
+                    <input
+                      type="number"
+                      placeholder="Qtd Min."
+                      min="0"
+                      value={filters.minQuantity}
+                      onChange={(e) => setFilters(prev => ({ ...prev, minQuantity: e.target.value }))}
+                    />
+                  </div>
+                  <div className={`${styles.formGroup} ${styles.filterGroupNumber}`}>
+                    <input
+                      type="number"
+                      placeholder="Qtd Máx."
+                      min="0"
+                      value={filters.maxQuantity}
+                      onChange={(e) => setFilters(prev => ({ ...prev, maxQuantity: e.target.value }))}
+                    />
+                  </div>
+                  <select value={filters.size} onChange={(e) => setFilters(prev => ({ ...prev, size: e.target.value }))}>
+                    <option value="">Todos os tamanhos</option>
+                    <option value="PP">PP</option><option value="P">P</option><option value="M">M</option>
+                    <option value="G">G</option><option value="GG">GG</option><option value="Único">Único</option>
+                  </select>
+                  <select value={filters.gender} onChange={(e) => setFilters(prev => ({ ...prev, gender: e.target.value }))}>
+                    <option value="">Todos os gêneros</option>
+                    <option value="Feminino">Feminino</option><option value="Masculino">Masculino</option>
+                    <option value="Unissex">Unissex</option><option value="Infantil">Infantil</option>
+                  </select>
+                  <select value={filters.type} onChange={(e) => setFilters(prev => ({ ...prev, type: e.target.value }))}>
+                    <option value="">Todos os tipos</option>
+                    <option value="Camisa">Camisa</option><option value="Calça">Calça</option>
+                    <option value="Vestido">Vestido</option><option value="Casaco">Casaco</option>
+                    <option value="Acessório">Acessório</option>
+                  </select>
+                  <select value={filters.conditionStatus} onChange={(e) => setFilters(prev => ({ ...prev, conditionStatus: e.target.value }))}>
+                    <option value="">Todos os estados</option>
+                    <option value="Novo">Novo</option><option value="Bom">Bom</option>
+                    <option value="Regular">Regular</option>
+                  </select>
+                  <select value={filters.location} onChange={(e) => setFilters(prev => ({ ...prev, location: e.target.value }))}>
+                    <option value="">Todas as localidades</option>
+                    <option value="Medianeira">Medianeira</option>
+                  </select>
+                  <button
+                    className={`${styles.cancelButton} ${styles.clearFilterButton}`}
+                    onClick={() => {
+                      setFilters({ searchTerm: '', minQuantity: '', maxQuantity: '', size: '', gender: '', type: '', conditionStatus: '', location: '' });
+                      setDebouncedSearch('');
+                    }}
+                  >
+                    Limpar
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className={styles.tableWrapper}>
@@ -271,21 +334,22 @@ export default function EstoquePage() {
                   <th>Nome</th>
                   <th>Quantidade</th>
                   <th>Código/Tag</th>
+                  <th>Características</th>
                   <th>Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={5} className={styles.loadingMessage}>Carregando...</td>
+                    <td colSpan={6} className={styles.loadingMessage}>Carregando...</td>
                   </tr>
                 ) : error ? (
                   <tr>
-                    <td colSpan={5} className={styles.errorMessage}>{error}</td>
+                    <td colSpan={6} className={styles.errorMessage}>{error}</td>
                   </tr>
                 ) : mockEstoque.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className={styles.noDataMessage}>Nenhum produto cadastrado ainda.</td>
+                    <td colSpan={6} className={styles.noDataMessage}>Nenhum produto cadastrado ainda.</td>
                   </tr>
                 ) : (
                   mockEstoque.map(item => (
@@ -300,6 +364,7 @@ export default function EstoquePage() {
                           <span style={{ color: '#999', fontStyle: 'italic' }}>Sem tag</span>
                         )}
                       </td>
+                      <td>{[item.type, item.size, item.gender, item.conditionStatus, item.location].filter(Boolean).join(' | ') || 'Não informado'}</td>
                       <td className={styles.actionButtons}>
                         <button
                           className={styles.editButton}
@@ -344,7 +409,7 @@ export default function EstoquePage() {
             <form onSubmit={handleAddProduto}>
               <div className={styles.formGroup}>
                 <label htmlFor="nome">Nome *</label>
-                <input 
+                <input
                   id="nome"
                   type="text"
                   required 
@@ -354,7 +419,7 @@ export default function EstoquePage() {
               </div>
               <div className={styles.formGroup}>
                 <label htmlFor="tagCode">Código/Tag (Opcional)</label>
-                <input 
+                <input
                   id="tagCode"
                   type="text"
                   value={novoProduto.tagCode} 
@@ -364,7 +429,7 @@ export default function EstoquePage() {
               </div>
               <div className={styles.formGroup}>
                 <label htmlFor="quantidade">Quantidade *</label>
-                <input 
+                <input
                   id="quantidade"
                   type="number" 
                   min={1} 
@@ -372,6 +437,36 @@ export default function EstoquePage() {
                   value={novoProduto.quantidade} 
                   onChange={e => setNovoProduto({ ...novoProduto, quantidade: e.target.value })} 
                 />
+              </div>
+              <div className={styles.itemAttributesGrid}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="size">Tamanho</label>
+                  <select id="size" value={novoProduto.size} onChange={e => setNovoProduto({ ...novoProduto, size: e.target.value })}>
+                    <option value="">Selecione</option><option value="PP">PP</option><option value="P">P</option>
+                    <option value="M">M</option><option value="G">G</option><option value="GG">GG</option><option value="Único">Único</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="gender">Gênero</label>
+                  <select id="gender" value={novoProduto.gender} onChange={e => setNovoProduto({ ...novoProduto, gender: e.target.value })}>
+                    <option value="">Selecione</option><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option>
+                    <option value="Unissex">Unissex</option><option value="Infantil">Infantil</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="type">Tipo</label>
+                  <input id="type" type="text" value={novoProduto.type} onChange={e => setNovoProduto({ ...novoProduto, type: e.target.value })} placeholder="Ex.: Camisa" />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="conditionStatus">Estado de conservação</label>
+                  <select id="conditionStatus" value={novoProduto.conditionStatus} onChange={e => setNovoProduto({ ...novoProduto, conditionStatus: e.target.value })}>
+                    <option value="">Selecione</option><option value="Novo">Novo</option><option value="Bom">Bom</option><option value="Regular">Regular</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="location">Localização</label>
+                  <input id="location" type="text" value={novoProduto.location} onChange={e => setNovoProduto({ ...novoProduto, location: e.target.value })} />
+                </div>
               </div>
               <div className={styles.modalActions}>
                 <button 
@@ -402,7 +497,7 @@ export default function EstoquePage() {
             <form onSubmit={handleEditSubmit}>
               <div className={styles.formGroup}>
                 <label htmlFor="editNome">Nome *</label>
-                <input 
+                <input
                   id="editNome"
                   type="text"
                   required 
@@ -412,7 +507,7 @@ export default function EstoquePage() {
               </div>
               <div className={styles.formGroup}>
                 <label htmlFor="editTagCode">Código/Tag (Opcional)</label>
-                <input 
+                <input
                   id="editTagCode"
                   type="text"
                   value={editProduto.tagCode} 
@@ -422,7 +517,7 @@ export default function EstoquePage() {
               </div>
               <div className={styles.formGroup}>
                 <label htmlFor="editQuantidade">Quantidade *</label>
-                <input 
+                <input
                   id="editQuantidade"
                   type="number" 
                   min={0} 
@@ -430,6 +525,36 @@ export default function EstoquePage() {
                   value={editProduto.quantidade} 
                   onChange={e => setEditProduto({ ...editProduto, quantidade: e.target.value })} 
                 />
+              </div>
+              <div className={styles.itemAttributesGrid}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editSize">Tamanho</label>
+                  <select id="editSize" value={editProduto.size} onChange={e => setEditProduto({ ...editProduto, size: e.target.value })}>
+                    <option value="">Selecione</option><option value="PP">PP</option><option value="P">P</option>
+                    <option value="M">M</option><option value="G">G</option><option value="GG">GG</option><option value="Único">Único</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editGender">Gênero</label>
+                  <select id="editGender" value={editProduto.gender} onChange={e => setEditProduto({ ...editProduto, gender: e.target.value })}>
+                    <option value="">Selecione</option><option value="Feminino">Feminino</option><option value="Masculino">Masculino</option>
+                    <option value="Unissex">Unissex</option><option value="Infantil">Infantil</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editType">Tipo</label>
+                  <input id="editType" type="text" value={editProduto.type} onChange={e => setEditProduto({ ...editProduto, type: e.target.value })} />
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editConditionStatus">Estado de conservação</label>
+                  <select id="editConditionStatus" value={editProduto.conditionStatus} onChange={e => setEditProduto({ ...editProduto, conditionStatus: e.target.value })}>
+                    <option value="">Selecione</option><option value="Novo">Novo</option><option value="Bom">Bom</option><option value="Regular">Regular</option>
+                  </select>
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="editLocation">Localização</label>
+                  <input id="editLocation" type="text" value={editProduto.location} onChange={e => setEditProduto({ ...editProduto, location: e.target.value })} />
+                </div>
               </div>
               <div className={styles.modalActions}>
                 <button 
