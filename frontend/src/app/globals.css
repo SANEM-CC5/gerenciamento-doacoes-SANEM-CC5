@@ -12,6 +12,8 @@
   --color-border-light: #e5e7eb;
   --color-error: #c0392b;
   --color-success: #43a047;
+  --sidebar-width: 220px;
+  --sidebar-offset: 250px;
 }
 
 @media (prefers-color-scheme: dark) {

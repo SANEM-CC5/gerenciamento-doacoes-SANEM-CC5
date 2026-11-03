@@ -1,6 +1,9 @@
 /* Todos os estilos agora usam variáveis globais e visual minimalista */
 .formWrapper {
-  width: 100vw;
+  margin-left: var(--sidebar-width, 220px);
+  width: calc(100% - var(--sidebar-width, 220px));
+  padding-top: 56px;
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   justify-content: center;
   align-items: flex-start;

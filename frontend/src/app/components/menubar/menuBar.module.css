@@ -1,6 +1,7 @@
 .menuBar {
-  width: calc(100% - 220px);
-  left: 220px;
+  width: calc(100% - var(--sidebar-width, 220px));
+  left: var(--sidebar-width, 220px);
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   height: 56px;
   background: #fff;
   display: flex;

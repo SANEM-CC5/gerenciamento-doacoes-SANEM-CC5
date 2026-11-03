@@ -2,8 +2,9 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  margin-left: 220px;
-  width: calc(100% - 220px);
+  margin-left: var(--sidebar-width, 220px);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  width: calc(100% - var(--sidebar-width, 220px));
   box-sizing: border-box;
 }
 
