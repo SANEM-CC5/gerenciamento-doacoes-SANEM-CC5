@@ -36,6 +36,13 @@ public class ReportService {
         return new SimpleDateFormat("dd/MM/yyyy").format(date);
     }
 
+    private String formatPeriodSuffix(Date startDate, Date endDate) {
+        if (startDate == null && endDate == null) return "";
+        String start = startDate != null ? formatDate(startDate) : "Inicio";
+        String end = endDate != null ? formatDate(endDate) : "Hoje";
+        return " | Periodo: " + start + " ate " + end;
+    }
+
     private String translateStatus(BeneficiaryStatus status) {
         if (status == null) return "-";
         return switch (status) {
@@ -54,10 +61,18 @@ public class ReportService {
     // ==========================================
 
     public byte[] generateBeneficiariesCsv(BeneficiaryFilterDTO filter) {
-        List<BeneficiaryDTO> list = beneficiaryService.listAsDTO(filter != null ? filter : new BeneficiaryFilterDTO(null, null, null, null, null));
-        
+        return generateBeneficiariesCsv(filter, null, null);
+    }
+
+    public byte[] generateBeneficiariesCsv(BeneficiaryFilterDTO filter, Date startDate, Date endDate) {
+        List<BeneficiaryDTO> list = filterBeneficiariesByPeriod(
+                beneficiaryService.listAsDTO(filter != null ? filter : new BeneficiaryFilterDTO(null, null, null, null, null)),
+                startDate,
+                endDate
+        );
+
         List<String> headers = List.of("ID", "Nome Completo", "CPF", "Telefone", "Dados Socioeconomicos", "Status", "Limite Mensal", "Retiradas no Mes", "Limite Restante");
-        
+
         List<List<String>> rows = list.stream().map(b -> List.of(
                 String.valueOf(b.beneficiaryId() != null ? b.beneficiaryId() : ""),
                 b.fullName() != null ? b.fullName() : "",
@@ -77,7 +92,15 @@ public class ReportService {
     }
 
     public byte[] generateBeneficiariesPdf(BeneficiaryFilterDTO filter) throws IOException {
-        List<BeneficiaryDTO> list = beneficiaryService.listAsDTO(filter != null ? filter : new BeneficiaryFilterDTO(null, null, null, null, null));
+        return generateBeneficiariesPdf(filter, null, null);
+    }
+
+    public byte[] generateBeneficiariesPdf(BeneficiaryFilterDTO filter, Date startDate, Date endDate) throws IOException {
+        List<BeneficiaryDTO> list = filterBeneficiariesByPeriod(
+                beneficiaryService.listAsDTO(filter != null ? filter : new BeneficiaryFilterDTO(null, null, null, null, null)),
+                startDate,
+                endDate
+        );
 
         List<String> headers = List.of("ID", "Nome Completo", "CPF", "Telefone", "Status", "Limite", "Utilizado", "Restante");
         List<Float> widths = List.of(45f, 230f, 110f, 105f, 90f, 60f, 60f, 60f);
@@ -93,7 +116,48 @@ public class ReportService {
                 String.valueOf(b.remainingWithdrawals() != null ? b.remainingWithdrawals() : 0)
         )).toList();
 
-        return new PdfReportBuilder("Relatorio de Beneficiarios", "Total: " + list.size() + " registros", headers, widths, rows).build();
+        String subtitle = "Total: " + list.size() + " registros" + formatPeriodSuffix(startDate, endDate);
+        return new PdfReportBuilder("Relatorio de Beneficiarios", subtitle, headers, widths, rows).build();
+    }
+
+    private List<BeneficiaryDTO> filterBeneficiariesByPeriod(List<BeneficiaryDTO> list, Date startDate, Date endDate) {
+        if (startDate == null && endDate == null) {
+            return list;
+        }
+        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(
+                withdrawalService.list(new WithdrawalFilterDTO(startDate, endDate, null, null, null, null, null))
+        );
+        Set<Long> activeBenIds = new HashSet<>();
+        Map<Long, Integer> usedByBen = new HashMap<>();
+
+        for (WithdrawalDTO w : withdrawals) {
+            if (w.beneficiary() != null && w.beneficiary().beneficiaryId() != null) {
+                Long benId = w.beneficiary().beneficiaryId();
+                activeBenIds.add(benId);
+                int qty = w.items() == null ? 0 : w.items().stream().mapToInt(it -> it.quantity() != null ? it.quantity() : 0).sum();
+                usedByBen.put(benId, usedByBen.getOrDefault(benId, 0) + qty);
+            }
+        }
+
+        return list.stream()
+                .filter(b -> b.beneficiaryId() != null && activeBenIds.contains(b.beneficiaryId()))
+                .map(b -> {
+                    int used = usedByBen.getOrDefault(b.beneficiaryId(), 0);
+                    Integer rem = b.withdrawalLimit() != null ? Math.max(b.withdrawalLimit() - used, 0) : b.remainingWithdrawals();
+                    return new BeneficiaryDTO(
+                            b.beneficiaryId(),
+                            b.fullName(),
+                            b.cpf(),
+                            b.phone(),
+                            b.socioeconomicData(),
+                            b.beneficiaryStatus(),
+                            b.approverId(),
+                            b.withdrawalLimit(),
+                            used,
+                            rem
+                    );
+                })
+                .toList();
     }
 
     // ==========================================
@@ -101,7 +165,15 @@ public class ReportService {
     // ==========================================
 
     public byte[] generateInventoryCsv(ItemFilterDTO filter) {
-        List<ItemDTO> list = itemService.generateItemDTOList(itemService.list(filter != null ? filter : emptyItemFilter()));
+        return generateInventoryCsv(filter, null, null);
+    }
+
+    public byte[] generateInventoryCsv(ItemFilterDTO filter, Date startDate, Date endDate) {
+        List<ItemDTO> list = filterItemsByPeriod(
+                itemService.generateItemDTOList(itemService.list(filter != null ? filter : emptyItemFilter())),
+                startDate,
+                endDate
+        );
 
         List<String> headers = List.of("ID", "Descricao", "Codigo/Tag", "Categoria", "Tamanho", "Estado de Conservacao", "Genero", "Quantidade em Estoque");
 
@@ -123,7 +195,15 @@ public class ReportService {
     }
 
     public byte[] generateInventoryPdf(ItemFilterDTO filter) throws IOException {
-        List<ItemDTO> list = itemService.generateItemDTOList(itemService.list(filter != null ? filter : emptyItemFilter()));
+        return generateInventoryPdf(filter, null, null);
+    }
+
+    public byte[] generateInventoryPdf(ItemFilterDTO filter, Date startDate, Date endDate) throws IOException {
+        List<ItemDTO> list = filterItemsByPeriod(
+                itemService.generateItemDTOList(itemService.list(filter != null ? filter : emptyItemFilter())),
+                startDate,
+                endDate
+        );
 
         List<String> headers = List.of("ID", "Descricao", "Codigo/Tag", "Categoria", "Tam.", "Estado", "Genero", "Estoque");
         List<Float> widths = List.of(40f, 195f, 95f, 110f, 50f, 120f, 80f, 70f);
@@ -141,7 +221,40 @@ public class ReportService {
                 String.valueOf(i.stockQuantity() != null ? i.stockQuantity() : 0)
         )).toList();
 
-        return new PdfReportBuilder("Relatorio de Estoque", "Itens: " + list.size() + " | Saldo Total em Estoque: " + totalStock, headers, widths, rows).build();
+        String subtitle = "Itens: " + list.size() + " | Saldo Total em Estoque: " + totalStock + formatPeriodSuffix(startDate, endDate);
+        return new PdfReportBuilder("Relatorio de Estoque", subtitle, headers, widths, rows).build();
+    }
+
+    private List<ItemDTO> filterItemsByPeriod(List<ItemDTO> list, Date startDate, Date endDate) {
+        if (startDate == null && endDate == null) {
+            return list;
+        }
+        List<DonationDTO> donations = donationService.findAllFiltered(startDate, endDate, null, null, null);
+        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(
+                withdrawalService.list(new WithdrawalFilterDTO(startDate, endDate, null, null, null, null, null))
+        );
+        Set<Long> activeItemIds = new HashSet<>();
+        for (DonationDTO d : donations) {
+            if (d.items() != null) {
+                for (var it : d.items()) {
+                    if (it.item() != null && it.item().itemId() != null) {
+                        activeItemIds.add(it.item().itemId());
+                    }
+                }
+            }
+        }
+        for (WithdrawalDTO w : withdrawals) {
+            if (w.items() != null) {
+                for (var it : w.items()) {
+                    if (it.itemDTO() != null && it.itemDTO().itemId() != null) {
+                        activeItemIds.add(it.itemDTO().itemId());
+                    }
+                }
+            }
+        }
+        return list.stream()
+                .filter(i -> i.itemId() != null && activeItemIds.contains(i.itemId()))
+                .toList();
     }
 
     // ==========================================
@@ -213,7 +326,8 @@ public class ReportService {
             );
         }).toList();
 
-        return new PdfReportBuilder("Relatorio de Doacoes", "Total Doacoes: " + list.size() + " | Total Itens: " + totalItens, headers, widths, rows).build();
+        String subtitle = "Total Doacoes: " + list.size() + " | Total Itens: " + totalItens + formatPeriodSuffix(startDate, endDate);
+        return new PdfReportBuilder("Relatorio de Doacoes", subtitle, headers, widths, rows).build();
     }
 
     // ==========================================
@@ -289,7 +403,10 @@ public class ReportService {
             );
         }).toList();
 
-        return new PdfReportBuilder("Relatorio de Retiradas", "Total Retiradas: " + list.size() + " | Total Itens: " + totalItens, headers, widths, rows).build();
+        Date startDate = filter != null ? filter.startDate() : null;
+        Date endDate = filter != null ? filter.endDate() : null;
+        String subtitle = "Total Retiradas: " + list.size() + " | Total Itens: " + totalItens + formatPeriodSuffix(startDate, endDate);
+        return new PdfReportBuilder("Relatorio de Retiradas", subtitle, headers, widths, rows).build();
     }
 
     // ==========================================
@@ -297,17 +414,25 @@ public class ReportService {
     // ==========================================
 
     public byte[] generateGeneralCsv() {
+        return generateGeneralCsv(null, null);
+    }
+
+    public byte[] generateGeneralCsv(Date startDate, Date endDate) {
         List<BeneficiaryDTO> beneficiaries = beneficiaryService.listAsDTO(new BeneficiaryFilterDTO(null, null, null, null, null));
         List<ItemDTO> items = itemService.generateItemDTOList(itemService.list(emptyItemFilter()));
-        List<DonationDTO> donations = donationService.findAll();
-        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(withdrawalService.list(new WithdrawalFilterDTO(null, null, null, null, null, null, null)));
+        List<DonationDTO> donations = (startDate != null || endDate != null)
+                ? donationService.findAllFiltered(startDate, endDate, null, null, null)
+                : donationService.findAll();
+        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(
+                withdrawalService.list(new WithdrawalFilterDTO(startDate, endDate, null, null, null, null, null))
+        );
 
         long totalEstoque = items.stream().mapToLong(i -> i.stockQuantity() != null ? i.stockQuantity() : 0).sum();
         int totalItensDoados = donations.stream().mapToInt(d -> d.items() == null ? 0 : d.items().stream().mapToInt(it -> it.quantity() != null ? it.quantity() : 0).sum()).sum();
         int totalItensRetirados = withdrawals.stream().mapToInt(w -> w.items() == null ? 0 : w.items().stream().mapToInt(it -> it.quantity() != null ? it.quantity() : 0).sum()).sum();
 
         return new CsvReportBuilder()
-                .addComment("RELATORIO GERAL CONSOLIDADO SANEM")
+                .addComment("RELATORIO GERAL CONSOLIDADO SANEM" + formatPeriodSuffix(startDate, endDate))
                 .addHeader(List.of("Indicador", "Valor"))
                 .addRow(List.of("Total de Itens em Estoque", String.valueOf(totalEstoque)))
                 .addRow(List.of("Total de Itens Recebidos (Doacoes)", String.valueOf(totalItensDoados)))
@@ -319,10 +444,18 @@ public class ReportService {
     }
 
     public byte[] generateGeneralPdf() throws IOException {
+        return generateGeneralPdf(null, null);
+    }
+
+    public byte[] generateGeneralPdf(Date startDate, Date endDate) throws IOException {
         List<BeneficiaryDTO> beneficiaries = beneficiaryService.listAsDTO(new BeneficiaryFilterDTO(null, null, null, null, null));
         List<ItemDTO> items = itemService.generateItemDTOList(itemService.list(emptyItemFilter()));
-        List<DonationDTO> donations = donationService.findAll();
-        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(withdrawalService.list(new WithdrawalFilterDTO(null, null, null, null, null, null, null)));
+        List<DonationDTO> donations = (startDate != null || endDate != null)
+                ? donationService.findAllFiltered(startDate, endDate, null, null, null)
+                : donationService.findAll();
+        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(
+                withdrawalService.list(new WithdrawalFilterDTO(startDate, endDate, null, null, null, null, null))
+        );
 
         long totalEstoque = items.stream().mapToLong(i -> i.stockQuantity() != null ? i.stockQuantity() : 0).sum();
         int totalItensDoados = donations.stream().mapToInt(d -> d.items() == null ? 0 : d.items().stream().mapToInt(it -> it.quantity() != null ? it.quantity() : 0).sum()).sum();
@@ -333,13 +466,14 @@ public class ReportService {
 
         List<List<String>> rows = List.of(
                 List.of("Saldo Total em Estoque", String.valueOf(totalEstoque), "Soma das quantidades de todos os itens cadastrados"),
-                List.of("Total de Itens Doados", String.valueOf(totalItensDoados), "Itens recebidos atraves de todas as doacoes registradas"),
+                List.of("Total de Itens Doados", String.valueOf(totalItensDoados), "Itens recebidos atraves das doacoes registradas"),
                 List.of("Total de Itens Retirados", String.valueOf(totalItensRetirados), "Itens entregues a beneficiarios atendidos"),
                 List.of("Total de Beneficiarios", String.valueOf(beneficiaries.size()), "Pessoas e familias cadastradas no sistema"),
                 List.of("Total de Doacoes Registradas", String.valueOf(donations.size()), "Quantidade de registros de entrada de doacao"),
                 List.of("Total de Atendimentos / Retiradas", String.valueOf(withdrawals.size()), "Quantidade de atendimentos com retiradas realizadas")
         );
 
-        return new PdfReportBuilder("Relatorio Geral Consolidado", "Visao Executiva do Brecho Beneficente SANEM", headers, widths, rows).build();
+        String subtitle = "Visao Executiva do Brecho Beneficente SANEM" + formatPeriodSuffix(startDate, endDate);
+        return new PdfReportBuilder("Relatorio Geral Consolidado", subtitle, headers, widths, rows).build();
     }
 }

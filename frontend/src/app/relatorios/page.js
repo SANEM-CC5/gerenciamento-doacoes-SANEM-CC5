@@ -17,13 +17,11 @@ import {
   FaHandHoldingHeart,
   FaArrowDown,
   FaUsers,
-  FaChevronRight,
 } from "react-icons/fa";
 
-
 const STATUS_META = {
-  APPROVED: { label: "Aprovados",  color: "#4CAF50" },
-  PENDING:  { label: "Pendentes",  color: "#FFA726" },
+  APPROVED: { label: "Aprovados", color: "#4CAF50" },
+  PENDING: { label: "Pendentes", color: "#FFA726" },
   REJECTED: { label: "Rejeitados", color: "#EF5350" },
 };
 
@@ -42,7 +40,7 @@ function LineChart({ data, keys, colors, height = 220 }) {
   const W = width - PAD.left - PAD.right;
   const H = height - PAD.top - PAD.bottom;
 
-  const allValues = data.flatMap(d => keys.map(k => d[k] ?? 0));
+  const allValues = data.flatMap((d) => keys.map((k) => d[k] ?? 0));
   const maxVal = Math.max(...allValues, 1);
 
   const xStep = W / Math.max(data.length - 1, 1);
@@ -50,14 +48,15 @@ function LineChart({ data, keys, colors, height = 220 }) {
   const toX = (i) => PAD.left + i * xStep;
   const toY = (v) => PAD.top + H - (v / maxVal) * H;
 
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map((f) => ({
     v: Math.round(maxVal * f),
     y: toY(maxVal * f),
   }));
 
+  const labelStep = Math.max(Math.floor(data.length / 6), 1);
   const xLabels = data.map((d, i) => {
     const distanceToLastDay = data.length - 1 - i;
-    const show = distanceToLastDay % 5 === 0;
+    const show = distanceToLastDay % labelStep === 0;
     return { label: d.dia, x: toX(i), show };
   });
 
@@ -80,15 +79,30 @@ function LineChart({ data, keys, colors, height = 220 }) {
       <svg
         width="100%"
         height={height}
-        viewBox={`0 0 ${width} ${height}`} 
+        viewBox={`0 0 ${width} ${height}`}
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setTip(null)}
         style={{ display: "block", cursor: "crosshair" }}
       >
         {yTicks.map(({ v, y }) => (
           <g key={v}>
-            <line x1={PAD.left} x2={PAD.left + W} y1={y} y2={y} stroke="#f0f0f0" strokeWidth={1} />
-            <text x={PAD.left - 6} y={y + 4} textAnchor="end" fontSize={10} fill="#aaa">{v}</text>
+            <line
+              x1={PAD.left}
+              x2={PAD.left + W}
+              y1={y}
+              y2={y}
+              stroke="#f0f0f0"
+              strokeWidth={1}
+            />
+            <text
+              x={PAD.left - 6}
+              y={y + 4}
+              textAnchor="end"
+              fontSize={10}
+              fill="#aaa"
+            >
+              {v}
+            </text>
           </g>
         ))}
 
@@ -104,21 +118,40 @@ function LineChart({ data, keys, colors, height = 220 }) {
           />
         ))}
 
-        {xLabels.filter(l => l.show).map(({ label, x }) => (
-          <text key={x} x={x} y={PAD.top + H + 20} textAnchor="middle" fontSize={10} fill="#aaa">
-            {label}
-          </text>
-        ))}
+        {xLabels
+          .filter((l) => l.show)
+          .map(({ label, x }) => (
+            <text
+              key={x}
+              x={x}
+              y={PAD.top + H + 20}
+              textAnchor="middle"
+              fontSize={10}
+              fill="#aaa"
+            >
+              {label}
+            </text>
+          ))}
 
         {tip && (
           <>
             <line
-              x1={tip.x} x2={tip.x}
-              y1={PAD.top} y2={PAD.top + H}
-              stroke="#ccc" strokeWidth={1} strokeDasharray="4 2"
+              x1={tip.x}
+              x2={tip.x}
+              y1={PAD.top}
+              y2={PAD.top + H}
+              stroke="#ccc"
+              strokeWidth={1}
+              strokeDasharray="4 2"
             />
             {keys.map((key, ki) => (
-              <circle key={key} cx={tip.x} cy={toY(tip.d[key] ?? 0)} r={4} fill={colors[ki]} />
+              <circle
+                key={key}
+                cx={tip.x}
+                cy={toY(tip.d[key] ?? 0)}
+                r={4}
+                fill={colors[ki]}
+              />
             ))}
           </>
         )}
@@ -129,7 +162,10 @@ function LineChart({ data, keys, colors, height = 220 }) {
           <div className={styles.tooltipDate}>{tip.d.dia}</div>
           {keys.map((key, ki) => (
             <div key={key} className={styles.tooltipRow}>
-              <span className={styles.tooltipDot} style={{ background: colors[ki] }} />
+              <span
+                className={styles.tooltipDot}
+                style={{ background: colors[ki] }}
+              />
               <span>{key}:</span>
               <strong>{tip.d[key] ?? 0}</strong>
             </div>
@@ -158,11 +194,16 @@ function PieChart({ data, size = 180 }) {
   });
 
   const arc = (startA, endA, outerR, innerR) => {
-    const cos = Math.cos, sin = Math.sin;
-    const x1 = cx + outerR * cos(startA), y1 = cy + outerR * sin(startA);
-    const x2 = cx + outerR * cos(endA),   y2 = cy + outerR * sin(endA);
-    const x3 = cx + innerR * cos(endA),   y3 = cy + innerR * sin(endA);
-    const x4 = cx + innerR * cos(startA), y4 = cy + innerR * sin(startA);
+    const cos = Math.cos,
+      sin = Math.sin;
+    const x1 = cx + outerR * cos(startA),
+      y1 = cy + outerR * sin(startA);
+    const x2 = cx + outerR * cos(endA),
+      y2 = cy + outerR * sin(endA);
+    const x3 = cx + innerR * cos(endA),
+      y3 = cy + innerR * sin(endA);
+    const x4 = cx + innerR * cos(startA),
+      y4 = cy + innerR * sin(startA);
     const large = endA - startA > Math.PI ? 1 : 0;
     return `M${x1},${y1} A${outerR},${outerR},0,${large},1,${x2},${y2} L${x3},${y3} A${innerR},${innerR},0,${large},0,${x4},${y4} Z`;
   };
@@ -170,10 +211,13 @@ function PieChart({ data, size = 180 }) {
   const [hovered, setHovered] = useState(null);
 
   return (
-    <svg width={size} height={size} style={{ display: "block", margin: "0 auto" }}>
+    <svg
+      width={size}
+      height={size}
+      style={{ display: "block", margin: "0 auto" }}
+    >
       {slices.map((s, i) => {
         const isHovered = hovered === i;
-        const scale = isHovered ? 1.05 : 1;
         const midA = (s.start + s.end) / 2;
         const dx = isHovered ? Math.cos(midA) * 6 : 0;
         const dy = isHovered ? Math.sin(midA) * 6 : 0;
@@ -191,7 +235,14 @@ function PieChart({ data, size = 180 }) {
         );
       })}
       {/* Label central */}
-      <text x={cx} y={cy - 6} textAnchor="middle" fontSize={22} fontWeight={700} fill="#222">
+      <text
+        x={cx}
+        y={cy - 6}
+        textAnchor="middle"
+        fontSize={22}
+        fontWeight={700}
+        fill="#222"
+      >
         {total}
       </text>
       <text x={cx} y={cy + 14} textAnchor="middle" fontSize={11} fill="#aaa">
@@ -204,48 +255,132 @@ function PieChart({ data, size = 180 }) {
 export default function RelatoriosPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [cards, setCards] = useState({ retiradas: 0, doacoes: 0, estoque: 0, beneficiarios: 0 });
+  const [error, setError] = useState(null);
+  const [cards, setCards] = useState({
+    retiradas: 0,
+    doacoes: 0,
+    estoque: 0,
+    beneficiarios: 0,
+  });
   const [lineData, setLineData] = useState([]);
   const [pieData, setPieData] = useState([]);
+  const [filters, setFilters] = useState({
+    startDate: "",
+    endDate: "",
+  });
 
-  useEffect(() => { fetchAll(); }, []);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchAll(filters);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [filters]);
 
-  async function fetchAll() {
+  const handleFilterChange = (e) => {
+    const { name, value } = e.target;
+    setFilters((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleClearFilters = () => {
+    setFilters({
+      startDate: "",
+      endDate: "",
+    });
+  };
+
+  async function fetchAll(activeFilters = filters) {
+    if (activeFilters.startDate && activeFilters.endDate) {
+      if (new Date(activeFilters.startDate) > new Date(activeFilters.endDate)) {
+        setError("A data inicial não pode ser maior que a data final.");
+        setLoading(false);
+        return;
+      }
+    }
+
     setLoading(true);
+    setError(null);
     try {
+      const dateQuery = {};
+      if (activeFilters.startDate) dateQuery.startDate = activeFilters.startDate;
+      if (activeFilters.endDate) dateQuery.endDate = activeFilters.endDate;
+
       const [wrRaw, dnRaw, itRaw, bnRaw] = await Promise.allSettled([
-        apiService.getWithdrawals(),
-        apiService.getDonations(),
+        apiService.getWithdrawals(dateQuery),
+        apiService.getDonations(dateQuery),
         apiService.getItems(),
         apiService.getBeneficiaries(),
       ]);
 
-      const withdrawals   = wrRaw.status === "fulfilled" && Array.isArray(wrRaw.value) ? wrRaw.value : [];
-      const donations     = dnRaw.status === "fulfilled" && Array.isArray(dnRaw.value)
-        ? dnRaw.value.map(mapDonationFromBackend) : [];
-      const items         = itRaw.status === "fulfilled" && Array.isArray(itRaw.value)
-        ? itRaw.value.map(mapItemFromBackend) : [];
-      const beneficiaries = bnRaw.status === "fulfilled" && Array.isArray(bnRaw.value)
-        ? bnRaw.value.map(mapBeneficiaryFromBackend) : [];
+      const withdrawals =
+        wrRaw.status === "fulfilled" && Array.isArray(wrRaw.value)
+          ? wrRaw.value
+          : [];
+      const donations =
+        dnRaw.status === "fulfilled" && Array.isArray(dnRaw.value)
+          ? dnRaw.value.map(mapDonationFromBackend)
+          : [];
+      const items =
+        itRaw.status === "fulfilled" && Array.isArray(itRaw.value)
+          ? itRaw.value.map(mapItemFromBackend)
+          : [];
+      const beneficiaries =
+        bnRaw.status === "fulfilled" && Array.isArray(bnRaw.value)
+          ? bnRaw.value.map(mapBeneficiaryFromBackend)
+          : [];
 
-      const estoqueTotal  = items.reduce((s, i) => s + (Number(i.quantidade) || 0), 0);
-      const benefAtivos   = beneficiaries.filter(b => b.status === "APPROVED").length;
-      const retiradasTotal = withdrawals.reduce((s, w) =>
-        s + (w.items || []).reduce((a, i) => a + (i.quantity || 0), 0), 0);
-      const doacoesTotal  = donations.reduce((s, d) =>
-        s + (d.items || []).reduce((a, i) => a + (i.quantity || 0), 0), 0);
+      const estoqueTotal = items.reduce(
+        (s, i) => s + (Number(i.quantidade) || 0),
+        0
+      );
+      const benefAtivos = beneficiaries.filter(
+        (b) => b.status === "APPROVED"
+      ).length;
+      const retiradasTotal = withdrawals.reduce(
+        (s, w) =>
+          s + (w.items || []).reduce((a, i) => a + (i.quantity || 0), 0),
+        0
+      );
+      const doacoesTotal = donations.reduce(
+        (s, d) =>
+          s + (d.items || []).reduce((a, i) => a + (i.quantity || 0), 0),
+        0
+      );
 
-      setCards({ retiradas: retiradasTotal, doacoes: doacoesTotal, estoque: estoqueTotal, beneficiarios: benefAtivos });
-
-      const today = new Date();
-      const dias = Array.from({ length: 30 }, (_, i) => {
-        const d = new Date(today);
-        d.setDate(today.getDate() - (29 - i));
-        return d.toISOString().slice(0, 10);
+      setCards({
+        retiradas: retiradasTotal,
+        doacoes: doacoesTotal,
+        estoque: estoqueTotal,
+        beneficiarios: benefAtivos,
       });
 
+      let dias = [];
+      if (activeFilters.startDate || activeFilters.endDate) {
+        const end = activeFilters.endDate
+          ? new Date(`${activeFilters.endDate}T00:00:00`)
+          : new Date();
+        const start = activeFilters.startDate
+          ? new Date(`${activeFilters.startDate}T00:00:00`)
+          : new Date(new Date(end).setDate(end.getDate() - 29));
+        const curr = new Date(start);
+        while (curr <= end && dias.length <= 90) {
+          dias.push(curr.toISOString().slice(0, 10));
+          curr.setDate(curr.getDate() + 1);
+        }
+      }
+      if (dias.length === 0) {
+        const today = new Date();
+        dias = Array.from({ length: 30 }, (_, i) => {
+          const d = new Date(today);
+          d.setDate(today.getDate() - (29 - i));
+          return d.toISOString().slice(0, 10);
+        });
+      }
+
       const retPorDia = {};
-      withdrawals.forEach(w => {
+      withdrawals.forEach((w) => {
         const date = w.withdrawalDate?.slice(0, 10);
         if (!date) return;
         const q = (w.items || []).reduce((a, i) => a + (i.quantity || 0), 0);
@@ -253,42 +388,73 @@ export default function RelatoriosPage() {
       });
 
       const donPorDia = {};
-      donations.forEach(d => {
+      donations.forEach((d) => {
         const date = d.donationDate?.slice(0, 10);
         if (!date) return;
         const q = (d.items || []).reduce((a, i) => a + (i.quantity || 0), 0);
         donPorDia[date] = (donPorDia[date] || 0) + q;
       });
 
-      setLineData(dias.map(dia => {
-        const [, mes, dd] = dia.split("-");
-        return { dia: `${dd}/${mes}`, Retiradas: retPorDia[dia] || 0, Recebidas: donPorDia[dia] || 0 };
-      }));
+      setLineData(
+        dias.map((dia) => {
+          const [, mes, dd] = dia.split("-");
+          return {
+            dia: `${dd}/${mes}`,
+            Retiradas: retPorDia[dia] || 0,
+            Recebidas: donPorDia[dia] || 0,
+          };
+        })
+      );
 
       const statusCount = {};
-      beneficiaries.forEach(b => {
+      beneficiaries.forEach((b) => {
         const s = b.status || "PENDING";
         statusCount[s] = (statusCount[s] || 0) + 1;
       });
       setPieData(
         Object.entries(statusCount).map(([status, value]) => ({
-          name:  STATUS_META[status]?.label || status,
+          name: STATUS_META[status]?.label || status,
           value,
           color: STATUS_META[status]?.color || "#90A4AE",
         }))
       );
     } catch (err) {
       console.error("Erro ao carregar relatórios:", err);
+      setError("Erro ao carregar os dados consolidados.");
     } finally {
       setLoading(false);
     }
   }
 
   const cardList = [
-    { label: "Itens Retirados",      value: cards.retiradas,     icon: <FaArrowDown />,        color: "#4CAF50", bg: "#E8F5E9" },
-    { label: "Itens Recebidos",      value: cards.doacoes,       icon: <FaHandHoldingHeart />, color: "#42A5F5", bg: "#E3F2FD" },
-    { label: "Itens em Estoque",     value: cards.estoque,       icon: <FaBoxes />,            color: "#FFA726", bg: "#FFF3E0" },
-    { label: "Beneficiários Ativos", value: cards.beneficiarios, icon: <FaUsers />,            color: "#AB47BC", bg: "#F3E5F5" },
+    {
+      label: "Itens Retirados",
+      value: cards.retiradas,
+      icon: <FaArrowDown />,
+      color: "#4CAF50",
+      bg: "#E8F5E9",
+    },
+    {
+      label: "Itens Recebidos",
+      value: cards.doacoes,
+      icon: <FaHandHoldingHeart />,
+      color: "#42A5F5",
+      bg: "#E3F2FD",
+    },
+    {
+      label: "Itens em Estoque",
+      value: cards.estoque,
+      icon: <FaBoxes />,
+      color: "#FFA726",
+      bg: "#FFF3E0",
+    },
+    {
+      label: "Beneficiários Ativos",
+      value: cards.beneficiarios,
+      icon: <FaUsers />,
+      color: "#AB47BC",
+      bg: "#F3E5F5",
+    },
   ];
 
   return (
@@ -299,6 +465,7 @@ export default function RelatoriosPage() {
       <div className={styles.pageContent}>
         <RelatoriosNav
           titulo="Relatório Geral"
+          filters={filters}
           onExportPdf={() => window.print()}
           onExportCsv={() =>
             exportTableToCsv(
@@ -312,16 +479,60 @@ export default function RelatoriosPage() {
           }
         />
 
+        {/* Barra de Filtros Padronizada */}
+        <div className={`${styles.filtersContainer} ${styles.hideOnPrint}`}>
+          <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+            <input
+              type="date"
+              name="startDate"
+              value={filters.startDate}
+              onChange={handleFilterChange}
+              className={styles.filterInput}
+              title="Data Inicial"
+            />
+          </div>
+          <span className={styles.dateSeparator}>até</span>
+          <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+            <input
+              type="date"
+              name="endDate"
+              value={filters.endDate}
+              onChange={handleFilterChange}
+              className={styles.filterInput}
+              title="Data Final"
+            />
+          </div>
+          <button
+            className={styles.clearFilterButton}
+            onClick={handleClearFilters}
+          >
+            Limpar Filtros
+          </button>
+        </div>
+
+        {error && <div className={styles.errorText}>{error}</div>}
+
         {/* Cards */}
         <div className={styles.cardsRow}>
-          {cardList.map(card => (
-            <div key={card.label} className={styles.card} style={{ borderTop: `4px solid ${card.color}` }}>
-              <div className={styles.cardIcon} style={{ background: card.bg, color: card.color }}>
+          {cardList.map((card) => (
+            <div
+              key={card.label}
+              className={styles.card}
+              style={{ borderTop: `4px solid ${card.color}` }}
+            >
+              <div
+                className={styles.cardIcon}
+                style={{ background: card.bg, color: card.color }}
+              >
                 {card.icon}
               </div>
               <div className={styles.cardInfo}>
                 <span className={styles.cardValue}>
-                  {loading ? <span className={styles.skeleton} /> : card.value.toLocaleString("pt-BR")}
+                  {loading ? (
+                    <span className={styles.skeleton} />
+                  ) : (
+                    card.value.toLocaleString("pt-BR")
+                  )}
                 </span>
                 <span className={styles.cardLabel}>{card.label}</span>
               </div>
@@ -330,15 +541,24 @@ export default function RelatoriosPage() {
         </div>
 
         <div className={styles.chartsRow}>
-
           {/* Linha */}
           <div className={styles.chartBox}>
             <h3 className={styles.chartTitle}>Retiradas vs Recebidas por Dia</h3>
-            <p className={styles.chartSub}>Quantidade de itens — últimos 30 dias</p>
+            <p className={styles.chartSub}>
+              {filters.startDate || filters.endDate
+                ? "Quantidade de itens — período selecionado"
+                : "Quantidade de itens — últimos 30 dias"}
+            </p>
             <div className={styles.chartLegend}>
-              {[{ label: "Retiradas", color: "#4CAF50" }, { label: "Recebidas", color: "#42A5F5" }].map(l => (
+              {[
+                { label: "Retiradas", color: "#4CAF50" },
+                { label: "Recebidas", color: "#42A5F5" },
+              ].map((l) => (
                 <span key={l.label} className={styles.legendItem}>
-                  <span className={styles.legendDot} style={{ background: l.color }} />
+                  <span
+                    className={styles.legendDot}
+                    style={{ background: l.color }}
+                  />
                   {l.label}
                 </span>
               ))}
@@ -358,7 +578,9 @@ export default function RelatoriosPage() {
           {/* Pizza */}
           <div className={styles.chartBox}>
             <h3 className={styles.chartTitle}>Status dos Beneficiários</h3>
-            <p className={styles.chartSub}>Distribuição por situação cadastral</p>
+            <p className={styles.chartSub}>
+              Distribuição por situação cadastral
+            </p>
             {loading ? (
               <div className={styles.chartLoading}>Carregando...</div>
             ) : pieData.length === 0 ? (
@@ -367,9 +589,12 @@ export default function RelatoriosPage() {
               <div className={styles.pieWrapper}>
                 <PieChart data={pieData} size={180} />
                 <ul className={styles.pieLegend}>
-                  {pieData.map(entry => (
+                  {pieData.map((entry) => (
                     <li key={entry.name} className={styles.pieLegendItem}>
-                      <span className={styles.pieDot} style={{ background: entry.color }} />
+                      <span
+                        className={styles.pieDot}
+                        style={{ background: entry.color }}
+                      />
                       <span className={styles.pieName}>{entry.name}</span>
                       <span className={styles.pieValue}>{entry.value}</span>
                     </li>
@@ -378,7 +603,6 @@ export default function RelatoriosPage() {
               </div>
             )}
           </div>
-
         </div>
       </div>
     </div>

@@ -29,14 +29,22 @@ public class ReportController {
     // ==========================================
 
     @GetMapping("/beneficiaries/csv")
-    public ResponseEntity<byte[]> exportBeneficiariesCsv(BeneficiaryFilterDTO filter) {
-        byte[] csv = reportService.generateBeneficiariesCsv(filter);
+    public ResponseEntity<byte[]> exportBeneficiariesCsv(
+            BeneficiaryFilterDTO filter,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) {
+        byte[] csv = reportService.generateBeneficiariesCsv(filter, startDate, endDate);
         return buildCsvResponse(csv, "relatorio_beneficiarios.csv");
     }
 
     @GetMapping("/beneficiaries/pdf")
-    public ResponseEntity<byte[]> exportBeneficiariesPdf(BeneficiaryFilterDTO filter) throws IOException {
-        byte[] pdf = reportService.generateBeneficiariesPdf(filter);
+    public ResponseEntity<byte[]> exportBeneficiariesPdf(
+            BeneficiaryFilterDTO filter,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) throws IOException {
+        byte[] pdf = reportService.generateBeneficiariesPdf(filter, startDate, endDate);
         return buildPdfResponse(pdf, "relatorio_beneficiarios.pdf");
     }
 
@@ -45,14 +53,22 @@ public class ReportController {
     // ==========================================
 
     @GetMapping("/inventory/csv")
-    public ResponseEntity<byte[]> exportInventoryCsv(ItemFilterDTO filter) {
-        byte[] csv = reportService.generateInventoryCsv(filter);
+    public ResponseEntity<byte[]> exportInventoryCsv(
+            ItemFilterDTO filter,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) {
+        byte[] csv = reportService.generateInventoryCsv(filter, startDate, endDate);
         return buildCsvResponse(csv, "relatorio_estoque.csv");
     }
 
     @GetMapping("/inventory/pdf")
-    public ResponseEntity<byte[]> exportInventoryPdf(ItemFilterDTO filter) throws IOException {
-        byte[] pdf = reportService.generateInventoryPdf(filter);
+    public ResponseEntity<byte[]> exportInventoryPdf(
+            ItemFilterDTO filter,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) throws IOException {
+        byte[] pdf = reportService.generateInventoryPdf(filter, startDate, endDate);
         return buildPdfResponse(pdf, "relatorio_estoque.pdf");
     }
 
@@ -105,14 +121,20 @@ public class ReportController {
     // ==========================================
 
     @GetMapping("/general/csv")
-    public ResponseEntity<byte[]> exportGeneralCsv() {
-        byte[] csv = reportService.generateGeneralCsv();
+    public ResponseEntity<byte[]> exportGeneralCsv(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) {
+        byte[] csv = reportService.generateGeneralCsv(startDate, endDate);
         return buildCsvResponse(csv, "relatorio_geral.csv");
     }
 
     @GetMapping("/general/pdf")
-    public ResponseEntity<byte[]> exportGeneralPdf() throws IOException {
-        byte[] pdf = reportService.generateGeneralPdf();
+    public ResponseEntity<byte[]> exportGeneralPdf(
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date startDate,
+            @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") Date endDate
+    ) throws IOException {
+        byte[] pdf = reportService.generateGeneralPdf(startDate, endDate);
         return buildPdfResponse(pdf, "relatorio_geral.pdf");
     }
 

@@ -7,7 +7,7 @@ import RelatoriosNav from "../../components/relatoriosNav/RelatoriosNav";
 import styles from "../relatorios.module.css";
 
 import apiService from "../../../services/api";
-import { mapItemFromBackend } from "../../../services/dataMapper";
+import { mapItemFromBackend, mapDonationFromBackend } from "../../../services/dataMapper";
 import { exportTableToCsv } from "../../../utils/exportUtils";
 
 export default function RelatorioEstoque() {
@@ -17,8 +17,10 @@ export default function RelatorioEstoque() {
   const [categories, setCategories] = useState([]);
   const [totalEstoque, setTotalEstoque] = useState(0);
 
-  // --- LÓGICA DE FILTROS (RF16) ---
+  // --- LÓGICA DE FILTROS (RF08 + RF16) ---
   const [filters, setFilters] = useState({
+    startDate: '',
+    endDate: '',
     searchTerm: '',
     categoryId: '',
     size: '',
@@ -50,6 +52,8 @@ export default function RelatorioEstoque() {
 
   useEffect(() => {
     const activeFilters = {};
+    if (filters.startDate) activeFilters.startDate = filters.startDate;
+    if (filters.endDate) activeFilters.endDate = filters.endDate;
     if (debouncedSearch) activeFilters.searchTerm = debouncedSearch;
     if (filters.categoryId) activeFilters.categoryId = filters.categoryId;
     if (filters.size) activeFilters.size = filters.size;
@@ -60,6 +64,8 @@ export default function RelatorioEstoque() {
     
     carregarDados(activeFilters);
   }, [
+    filters.startDate,
+    filters.endDate,
     debouncedSearch,
     filters.categoryId,
     filters.size,
@@ -69,11 +75,61 @@ export default function RelatorioEstoque() {
     filters.maxQuantity
   ]);
 
+  const handleDateChange = (e) => {
+    const { name, value } = e.target;
+    setFilters(prev => ({ ...prev, [name]: value }));
+  };
+
   async function carregarDados(activeFilters = {}) {
+    if (activeFilters.startDate && activeFilters.endDate) {
+      if (new Date(activeFilters.startDate) > new Date(activeFilters.endDate)) {
+        alert("A data inicial não pode ser maior que a data final.");
+        return;
+      }
+    }
+
     try {
       setLoading(true);
-      const response = await apiService.getItems(activeFilters);
-      const itens = (response || []).map(mapItemFromBackend);
+      const { startDate, endDate, ...itemQueryFilters } = activeFilters;
+      const response = await apiService.getItems(itemQueryFilters);
+      let itens = (response || []).map(mapItemFromBackend);
+
+      // Se houver filtro por período (RF08), filtra itens que tiveram movimentação (doação ou retirada) no período
+      if (startDate || endDate) {
+        const dateParams = {};
+        if (startDate) dateParams.startDate = startDate;
+        if (endDate) dateParams.endDate = endDate;
+
+        const [donationsRaw, withdrawalsRaw] = await Promise.all([
+          apiService.getDonations(dateParams).catch(() => []),
+          apiService.getWithdrawals(dateParams).catch(() => [])
+        ]);
+
+        const movedIds = new Set();
+        const movedNames = new Set();
+
+        (donationsRaw || []).map(mapDonationFromBackend).forEach(d => {
+          (d.items || []).forEach(it => {
+            if (it.id) movedIds.add(Number(it.id));
+            if (it.nome) movedNames.add(it.nome.toLowerCase().trim());
+          });
+        });
+
+        (Array.isArray(withdrawalsRaw) ? withdrawalsRaw : []).forEach(w => {
+          (w.items || []).forEach(it => {
+            const itemId = it.itemDTO?.itemId ?? it.itemId;
+            const itemDesc = it.itemDTO?.description ?? it.description;
+            if (itemId) movedIds.add(Number(itemId));
+            if (itemDesc) movedNames.add(itemDesc.toLowerCase().trim());
+          });
+        });
+
+        itens = itens.filter(item =>
+          movedIds.has(Number(item.id)) ||
+          (item.nome && movedNames.has(item.nome.toLowerCase().trim()))
+        );
+      }
+
       setItems(itens);
       setTotalEstoque(
         itens.reduce((total, item) => total + (Number(item.quantidade) || 0), 0)
@@ -87,6 +143,8 @@ export default function RelatorioEstoque() {
 
   const handleClearFilters = () => {
     setFilters({
+      startDate: '',
+      endDate: '',
       searchTerm: '',
       categoryId: '',
       size: '',
@@ -131,8 +189,28 @@ export default function RelatorioEstoque() {
           }
         />
 
-        {/* BARRA DE FILTROS - RF16 */}
+        {/* BARRA DE FILTROS PADRONIZADA (RF08 + RF16) */}
         <div className={`${styles.filtersContainer} ${styles.hideOnPrint}`}>
+          <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+            <input
+              type="date"
+              name="startDate"
+              value={filters.startDate}
+              onChange={handleDateChange}
+              title="Data Inicial"
+            />
+          </div>
+          <span className={styles.dateSeparator}>até</span>
+          <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+            <input
+              type="date"
+              name="endDate"
+              value={filters.endDate}
+              onChange={handleDateChange}
+              title="Data Final"
+            />
+          </div>
+
           <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
             <input 
               type="text" 
