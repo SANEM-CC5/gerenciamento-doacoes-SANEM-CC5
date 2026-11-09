@@ -318,7 +318,7 @@
 }
 
 /* Tags de Status */
-.statusPending, .statusApproved, .statusRejected {
+.statusPending, .statusApproved, .statusRejected, .statusInactive {
   padding: 4px 10px;
   border-radius: 12px;
   font-size: 0.85rem;
@@ -336,6 +336,10 @@
 .statusRejected {
   background-color: #f8d7da;
   color: #721c24;
+}
+.statusInactive {
+  background-color: #e2e3e5;
+  color: #41464b;
 }
 
 /* Botões de Ação dentro da Tabela */
