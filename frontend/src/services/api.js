@@ -2,6 +2,9 @@
 import { API_CONFIG } from "../config/api"
 import authService from "./authService"
 
+// Evento disparado após POST/PUT/PATCH/DELETE bem-sucedidos
+export const DATA_CHANGED_EVENT = "sanem:data-changed"
+
 class ApiService {
     constructor() {
         this.baseURL = API_CONFIG.BASE_URL
@@ -35,6 +38,13 @@ class ApiService {
                 apiError.status = response.status;
                 apiError.response = errorData;
                 throw apiError;
+            }
+
+            // Qualquer escrita bem-sucedida pode ter alterado o estoque (doação,
+            // retirada, ajuste...). Avisa o sino de notificações para recarregar (RF19).
+            const method = (config.method || "GET").toUpperCase()
+            if (method !== "GET" && typeof window !== "undefined") {
+                window.dispatchEvent(new Event(DATA_CHANGED_EVENT))
             }
 
             if (response.status === 204) {
@@ -485,6 +495,28 @@ class ApiService {
         return this.request(`/withdrawal/beneficiary/${beneficiaryId}/reset-limit`, {
             method: "PATCH",
         });
+    }
+
+    // Métodos para Notificações (RF19 - estoque mínimo)
+    async getNotifications({ unreadOnly = false, limit = 20 } = {}) {
+        const queryParams = new URLSearchParams({ unreadOnly, limit }).toString()
+        return this.request(`/notification?${queryParams}`)
+    }
+
+    async getUnreadNotificationCount() {
+        return this.request("/notification/unread-count")
+    }
+
+    async markNotificationAsRead(id) {
+        return this.request(`/notification/${id}/read`, { method: "PATCH" })
+    }
+
+    async markAllNotificationsAsRead() {
+        return this.request("/notification/read-all", { method: "PATCH" })
+    }
+
+    async getLowStockItems() {
+        return this.getItems({ lowStock: true })
     }
 }
 

@@ -1,6 +1,7 @@
 package com.javalovers.core.item.domain.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public record ItemFormDTO(
         @JsonProperty("description")
@@ -12,6 +13,11 @@ public record ItemFormDTO(
         @JsonProperty("tagCode")
         String tagCode,
 
+<<<<<<< HEAD
+        @JsonProperty("minimumStock")
+        @PositiveOrZero(message = "O estoque mínimo não pode ser negativo.")
+        Long minimumStock
+=======
         @JsonProperty("size")
         String size,
 
@@ -26,5 +32,6 @@ public record ItemFormDTO(
 
         @JsonProperty("location")
         String location
+>>>>>>> origin/main
 ) {
 }

@@ -41,3 +41,9 @@ logging:
     com.javalovers: DEBUG
     org.springframework.security: DEBUG
 
+
+sanem:
+  notifications:
+    # RF19 – perfis que recebem alerta quando um item atinge o estoque mínimo
+    # (comparação sem diferenciar maiúsculas/minúsculas com profile.name)
+    low-stock-profiles: ${LOW_STOCK_NOTIFIED_PROFILES:Administrator,Attendant}

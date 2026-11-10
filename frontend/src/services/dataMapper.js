@@ -18,16 +18,27 @@ export const mapDonorFromBackend = (backendDonor) => {
     }
 }
 
+// "" / null / undefined -> null (sem estoque mínimo configurado)
+const toNullableNumber = (value) => {
+    if (value === "" || value === null || value === undefined) return null
+    const n = Number(value)
+    return Number.isFinite(n) ? n : null
+}
+
 export const mapItemToBackend = (frontendItem) => {
     return {
         description: frontendItem.nome || frontendItem.descricao || "",
         stockQuantity: frontendItem.quantidade || 0,
         tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null,
+<<<<<<< HEAD
+        minimumStock: toNullableNumber(frontendItem.estoqueMinimo)
+=======
         size: frontendItem.size || null,
         gender: frontendItem.gender || null,
         type: frontendItem.type || null,
         conditionStatus: frontendItem.conditionStatus || null,
         location: frontendItem.location || null
+>>>>>>> origin/main
     }
 }
 
@@ -38,11 +49,16 @@ export const mapItemFromBackend = (backendItem) => {
         descricao: backendItem.description,
         quantidade: backendItem.stockQuantity,
         tagCode: backendItem.tagCode || null,
+<<<<<<< HEAD
+        estoqueMinimo: backendItem.minimumStock ?? null,
+        estoqueBaixo: Boolean(backendItem.lowStock)
+=======
         size: backendItem.size || '',
         gender: backendItem.gender || '',
         type: backendItem.type || '',
         conditionStatus: backendItem.conditionStatus || '',
         location: backendItem.location || ''
+>>>>>>> origin/main
     }
 }
 

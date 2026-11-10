@@ -5,6 +5,7 @@ import com.javalovers.core.inventory.domain.enums.TransactionType;
 import com.javalovers.core.inventory.repository.InventoryTransactionRepository;
 import com.javalovers.core.item.domain.entity.Item;
 import com.javalovers.core.item.repository.ItemRepository;
+import com.javalovers.core.stockalert.service.StockAlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ public class InventoryService {
 
     private final InventoryTransactionRepository transactionRepository;
     private final ItemRepository itemRepository;
+    private final StockAlertService stockAlertService;
 
     @Transactional
     public void processTransaction(Item item, Long quantity, TransactionType type, Long referenceId) {
@@ -35,6 +37,9 @@ public class InventoryService {
         Long newStock = calculateNewStock(item.getStockQuantity(), quantity, type);
         item.setStockQuantity(newStock);
         itemRepository.save(item);
+
+        // RF19: verifica estoque mínimo após toda movimentação (doação, retirada, ajuste, estorno)
+        stockAlertService.evaluate(item);
     }
 
     private boolean isOutflow(TransactionType type) {

@@ -45,6 +45,10 @@
   border-left: 4px solid #f44336;
 }
 
+.notification.warning {
+  border-left: 4px solid #e08a1e;
+}
+
 .notificationContent {
   display: flex;
   align-items: flex-start;

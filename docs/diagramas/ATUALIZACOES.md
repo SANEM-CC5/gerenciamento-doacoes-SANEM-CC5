@@ -123,3 +123,31 @@ O domínio de `beneficiary_status` passa a incluir `INACTIVE`:
 - Frontend: `frontend/src/app/pontoscoleta/` e `frontend/src/app/components/map/CollectionPointsMap.js`.
 - DDL/DML aligned: `docs/database/Tabelas e Relacionamentos - DDL.sql` e
   `docs/database/Seed Dados Tabelas - DML.sql`.
+
+---
+
+## RF19 – Notificação de estoque mínimo (2026-11-02)
+
+### Diagrama de Classes
+- `Item`: novo atributo `minimumStock: Long` (opcional) e operação derivada `isLowStock(): boolean`
+  (`minimumStock != null && stockQuantity <= minimumStock`).
+- Nova classe `StockAlert`: `stockAlertId`, `item: Item`, `stockQuantity: Long`,
+  `minimumStock: Long`, `status: StockAlertStatus`, `createdAt`, `resolvedAt`;
+  operações `resolve()`, `isOpen()`. Associação `StockAlert *——1 Item`.
+- Novo enum `StockAlertStatus`: `OPEN`, `RESOLVED`.
+- Nova classe `Notification`: `notificationId`, `user: AppUser`, `stockAlert: StockAlert`,
+  `type: NotificationType`, `title`, `message`, `createdAt`, `readAt`; operação `markAsRead()`.
+  Associações `Notification *——1 AppUser` e `Notification *——0..1 StockAlert`.
+- Novo enum `NotificationType`: `LOW_STOCK`.
+- Serviços: `StockAlertService.evaluate(Item)` (chamado por `InventoryService.processTransaction`
+  e por `ItemService` ao criar/editar/excluir item) e `NotificationService`.
+
+### Diagrama de Caso de Uso
+- Novo caso de uso **"Receber alerta de estoque mínimo"** — atores Administrador e Funcionário;
+  `<<extend>>` de "Registrar retirada", "Registrar doação" (estorno) e "Ajustar estoque".
+- Novo caso de uso **"Configurar estoque mínimo do item"** — `<<include>>` em "Cadastrar/editar item".
+
+### MER
+- `item`: nova coluna `minimum_stock INT NULL`.
+- Nova entidade `stock_alert` (FK `item_id` → `item`).
+- Nova entidade `notification` (FK `user_id` → `app_user`, FK opcional `stock_alert_id` → `stock_alert`).

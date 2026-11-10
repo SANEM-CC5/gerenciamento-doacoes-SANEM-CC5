@@ -32,6 +32,14 @@ public class Item implements SoftDeletable {
     @Column(name = "stock_quantity")
     private Long stockQuantity;
 
+    /**
+     * Estoque mínimo do item (RF19). Quando o saldo atingir ou ficar abaixo
+     * deste valor, os usuários autorizados são notificados.
+     * NULL = item sem alerta de estoque mínimo configurado.
+     */
+    @Column(name = "minimum_stock")
+    private Long minimumStock;
+
     @Column(name = "tag_code", unique = true)
     private String tagCode;
 
@@ -52,4 +60,11 @@ public class Item implements SoftDeletable {
 
     @Column(name = "deleted_at")
     private LocalDateTime deletedAt;
+
+    /** true quando há mínimo configurado e o saldo está igual ou abaixo dele. */
+    public boolean isLowStock() {
+        if (minimumStock == null) return false;
+        long current = stockQuantity != null ? stockQuantity : 0L;
+        return current <= minimumStock;
+    }
 }

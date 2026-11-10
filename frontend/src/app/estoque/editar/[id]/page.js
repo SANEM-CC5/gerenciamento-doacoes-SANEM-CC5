@@ -19,7 +19,9 @@ const EditarItem = () => {
   
   const [form, setForm] = useState({
     nome: "",
-    quantidade: ""
+    quantidade: "",
+    tagCode: "",
+    estoqueMinimo: ""
   });
 
   useEffect(() => {
@@ -30,7 +32,10 @@ const EditarItem = () => {
         const mappedItem = mapItemFromBackend(item);
         setForm({
           nome: mappedItem.nome || "",
-          quantidade: mappedItem.quantidade || ""
+          quantidade: mappedItem.quantidade ?? "",
+          // preservados para não serem apagados no PUT
+          tagCode: mappedItem.tagCode || "",
+          estoqueMinimo: mappedItem.estoqueMinimo ?? ""
         });
       } catch (err) {
         console.error("Erro ao carregar item:", err);
@@ -120,6 +125,23 @@ const EditarItem = () => {
                 required 
                 placeholder="Quantidade" 
               />
+            </div>
+            <div className={styles.formGroup}>
+              <label htmlFor="estoqueMinimo"><b>Estoque mínimo</b></label>
+              <input 
+                id="estoqueMinimo" 
+                name="estoqueMinimo" 
+                type="number" 
+                min={0}
+                className={styles.formInput}
+                value={form.estoqueMinimo} 
+                onChange={handleChange} 
+                placeholder="Em branco = sem alerta"
+                aria-describedby="estoqueMinimoHelp"
+              />
+              <small id="estoqueMinimoHelp" className={styles.fieldHelp}>
+                Os usuários autorizados são notificados quando a quantidade atingir ou ficar abaixo deste valor.
+              </small>
             </div>
             
             <div className={styles.modalButtonGroup}>

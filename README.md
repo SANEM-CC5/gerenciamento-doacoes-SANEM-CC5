@@ -33,6 +33,7 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 - Catalogar produtos com códigos únicos
 - Gerenciar a quantidade de produtos disponíveis no estoque
 - Controle de entrada e saída de itens
+- Estoque mínimo por item, com notificação (sino no menu) para administradores e atendentes quando o saldo atinge ou fica abaixo do mínimo (RF19)
 
 #### 🎁 Distribuição de Itens
 
@@ -93,7 +94,7 @@ JavaLovers/
 │   │   │   │       └── ...
 │   │   │   └── resources/
 │   │   │       ├── application.yml
-│   │   │       └── db/migration/           # Migrations Flyway (V2..V9)
+│   │   │       └── db/migration/           # Migrations Flyway (V2..V10)
 │   │   └── test/
 │   ├── pom.xml
 │   └── Dockerfile

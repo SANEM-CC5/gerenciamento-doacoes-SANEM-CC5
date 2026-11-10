@@ -11,6 +11,7 @@ import com.javalovers.core.item.mapper.ItemDTOMapper;
 import com.javalovers.core.item.mapper.ItemUpdateMapper;
 import com.javalovers.core.item.repository.ItemRepository;
 import com.javalovers.core.item.util.QRCodeService;
+import com.javalovers.core.stockalert.service.StockAlertService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +34,7 @@ public class ItemService {
     private final ItemUpdateMapper itemUpdateMapper;
     private final QRCodeService qrCodeService;
     private final InventoryService inventoryService;
+    private final StockAlertService stockAlertService;
 
     public Item generateItem(ItemFormDTO itemFormDTO) {
         return itemCreateMapper.convert(itemFormDTO);
@@ -40,6 +42,7 @@ public class ItemService {
 
     @Transactional
     public Item createAndSave(ItemFormDTO itemFormDTO) {
+        validateMinimumStock(itemFormDTO);
         Item item = itemCreateMapper.convert(itemFormDTO);
         item = itemRepository.save(item);
 
@@ -47,6 +50,9 @@ public class ItemService {
 
         if (requestedInitialStock > 0) {
             inventoryService.processTransaction(item, requestedInitialStock, TransactionType.MANUAL_ADJUSTMENT_IN, null);
+        } else {
+            // Item criado sem saldo, mas com mínimo configurado, já nasce em alerta
+            stockAlertService.evaluate(item);
         }
 
         return item;
@@ -78,6 +84,7 @@ public class ItemService {
         if (requestedStock < 0) {
             throw new IllegalArgumentException("O estoque do item não pode ser um valor negativo.");
         }
+        validateMinimumStock(itemFormDTO);
 
         itemUpdateMapper.update(item, itemFormDTO); 
 
@@ -92,10 +99,23 @@ public class ItemService {
         }
 
         itemRepository.save(item); 
+
+        // RF19: o mínimo pode ter sido alterado sem mudança de saldo
+        stockAlertService.evaluate(item);
+    }
+
+    private void validateMinimumStock(ItemFormDTO itemFormDTO) {
+        if (itemFormDTO.minimumStock() != null && itemFormDTO.minimumStock() < 0) {
+            throw new IllegalArgumentException("O estoque mínimo não pode ser um valor negativo.");
+        }
     }
 
     @Transactional
     public void delete(Item item) {
+        // Marca como excluído antes de zerar o saldo: assim a verificação de estoque
+        // mínimo (RF19) não notifica sobre um item que está sendo removido e
+        // resolve qualquer alerta que estivesse aberto para ele.
+        item.softDelete();
         Long currentStock = item.getStockQuantity();
 
         if (currentStock != null && currentStock > 0) {
@@ -107,9 +127,10 @@ public class ItemService {
             );
 
             item.setStockQuantity(0L); 
+        } else {
+            stockAlertService.evaluate(item);
         }
 
-        item.softDelete();
         itemRepository.save(item);
     }
 
@@ -150,6 +171,17 @@ public class ItemService {
             return predicates;
         };
 
+<<<<<<< HEAD
+        // RF19: somente itens com mínimo configurado e saldo <= mínimo
+        Specification<Item> lowStockSpecification = (root, query, criteriaBuilder) -> {
+            if (!Boolean.TRUE.equals(itemFilterDTO.lowStock())) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.and(
+                criteriaBuilder.isNotNull(root.get("minimumStock")),
+                criteriaBuilder.lessThanOrEqualTo(root.get("stockQuantity"), root.get("minimumStock"))
+            );
+=======
         Specification<Item> attributeSpecification = (root, query, criteriaBuilder) -> {
             var predicates = criteriaBuilder.conjunction();
             if (hasValue(itemFilterDTO.size())) {
@@ -168,11 +200,16 @@ public class ItemService {
                 predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("location"), itemFilterDTO.location()));
             }
             return predicates;
+>>>>>>> origin/main
         };
 
         return Specification.where(searchSpecification)
                 .and(quantitySpecification)
+<<<<<<< HEAD
+                .and(lowStockSpecification)
+=======
                 .and(attributeSpecification)
+>>>>>>> origin/main
                 .and(notDeletedSpecification);
     }
 
