@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 "use client";
 import React, { useState, useEffect, useRef } from "react";
 import MenuBar from "../../components/menubar/menubar";
@@ -903,3 +904,6 @@ export default function ListaRetiradasPage() {
     </div >
   );
 }
+=======
+export { default } from '@/features/withdrawal/pages/lista/page';
+>>>>>>> Stashed changes

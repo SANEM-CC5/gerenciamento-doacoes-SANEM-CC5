@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 "use client";
 import React, { useState, useEffect } from "react";
 import MenuBar from '../components/menubar/menubar';
@@ -663,3 +664,6 @@ export default function UsuariosPage() {
     </div>
   );
 }
+=======
+export { default } from '@/features/users/pages/page';
+>>>>>>> Stashed changes

@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 "use client";
 import MenuBar from '../components/menubar/menubar';
 import Navigation from '../components/navegation/navegation';
@@ -468,3 +469,6 @@ export default function EstoquePage() {
     </div>
   );
 }
+=======
+export { default } from '@/features/inventory/pages/page';
+>>>>>>> Stashed changes

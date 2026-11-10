@@ -1,3 +1,4 @@
+<<<<<<< Updated upstream
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import MenuBar from "../../components/menubar/menubar";
@@ -661,3 +662,6 @@ export default function ListaBeneficiarios() {
     </div>
   );
 }
+=======
+export { default } from '@/features/beneficiary/pages/lista/page';
+>>>>>>> Stashed changes

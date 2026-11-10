@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import NotificationWrapper from "../components/notifications/NotificationWrapper";
+import NotificationWrapper from "@/shared/components/notifications/NotificationWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

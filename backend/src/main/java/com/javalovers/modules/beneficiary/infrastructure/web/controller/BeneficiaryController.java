@@ -1,0 +1,153 @@
+package com.javalovers.modules.beneficiary.infrastructure.web.controller;
+
+import com.javalovers.shared.utils.HttpUtils;
+import com.javalovers.modules.beneficiary.application.dto.request.BeneficiaryFilterDTO;
+import com.javalovers.modules.beneficiary.application.dto.request.BeneficiaryFormDTO;
+import com.javalovers.modules.beneficiary.application.dto.response.BeneficiaryDTO;
+import com.javalovers.modules.beneficiary.domain.entity.Beneficiary;
+import com.javalovers.modules.beneficiary.application.service.BeneficiaryService;
+import com.javalovers.modules.withdrawal.application.dto.request.WithdrawalFilterDTO;
+import com.javalovers.modules.withdrawal.application.dto.response.WithdrawalDTO;
+import com.javalovers.modules.withdrawal.application.service.WithdrawalService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.util.List;
+
+@RestController
+@RequiredArgsConstructor
+@RequestMapping("/beneficiary")
+public class BeneficiaryController {
+
+    private final BeneficiaryService beneficiaryService;
+    private final WithdrawalService withdrawalService;
+
+    @GetMapping
+    public ResponseEntity<Page<BeneficiaryDTO>> listPaged(Pageable pageable,
+            BeneficiaryFilterDTO beneficiaryFilterDTO) {
+        Page<Beneficiary> beneficiaryPage = beneficiaryService.list(pageable, beneficiaryFilterDTO);
+        Page<BeneficiaryDTO> beneficiaryDTOPage = beneficiaryService.generateBeneficiaryDTOPage(beneficiaryPage);
+
+        return ResponseEntity.ok(beneficiaryDTOPage);
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<List<BeneficiaryDTO>> list(BeneficiaryFilterDTO beneficiaryFilterDTO) {
+        List<BeneficiaryDTO> beneficiaryDTOList = beneficiaryService.listAsDTO(beneficiaryFilterDTO);
+        return ResponseEntity.ok(beneficiaryDTOList);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<BeneficiaryDTO> get(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        BeneficiaryDTO beneficiaryDTO = beneficiaryService.generateBeneficiaryDTO(beneficiary);
+
+        return ResponseEntity.ok(beneficiaryDTO);
+    }
+
+    @PostMapping
+    public ResponseEntity<BeneficiaryDTO> create(@RequestBody @Valid BeneficiaryFormDTO beneficiaryFormDTO,
+            UriComponentsBuilder uriComponentsBuilder) {
+        Beneficiary beneficiary = beneficiaryService.generateBeneficiary(beneficiaryFormDTO);
+        beneficiaryService.save(beneficiary);
+
+        URI uri = HttpUtils.createURI(uriComponentsBuilder, "beneficiary", beneficiary.getBeneficiaryId());
+
+        return ResponseEntity.created(uri).body(beneficiaryService.generateBeneficiaryDTO(beneficiary));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Void> update(@PathVariable Long id,
+            @RequestBody @Valid BeneficiaryFormDTO beneficiaryFormDTO) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.updateBeneficiary(beneficiary, beneficiaryFormDTO);
+
+        beneficiaryService.save(beneficiary);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.delete(beneficiary);
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/approve")
+    public ResponseEntity<BeneficiaryDTO> approve(@PathVariable Long id, @RequestParam Long approverUserId) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.approveBeneficiary(id, approverUserId);
+
+        Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
+        return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
+    }
+
+    @PatchMapping("/{id}/reject")
+    public ResponseEntity<BeneficiaryDTO> reject(@PathVariable Long id, @RequestParam Long approverUserId) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.rejectBeneficiary(id, approverUserId);
+
+        Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
+        return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
+    }
+
+    @PatchMapping("/{id}/inactivate")
+    public ResponseEntity<BeneficiaryDTO> inactivate(@PathVariable Long id, @RequestParam Long approverUserId) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.inactivateBeneficiary(id, approverUserId);
+
+        Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
+        return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
+    }
+
+    @PatchMapping("/{id}/reactivate")
+    public ResponseEntity<BeneficiaryDTO> reactivate(@PathVariable Long id, @RequestParam Long approverUserId) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        beneficiaryService.reactivateBeneficiary(id, approverUserId);
+
+        Beneficiary updatedBeneficiary = beneficiaryService.getOrThrowException(id);
+        return ResponseEntity.ok(beneficiaryService.generateBeneficiaryDTO(updatedBeneficiary));
+    }
+
+    @GetMapping("/{id}/withdrawals")
+    public ResponseEntity<List<WithdrawalDTO>> getWithdrawals(@PathVariable Long id) {
+        Beneficiary beneficiary = beneficiaryService.getOrNull(id);
+        if (beneficiary == null)
+            return ResponseEntity.notFound().build();
+
+        WithdrawalFilterDTO filter = new WithdrawalFilterDTO(null, null, null, null, null, id, null);
+        List<WithdrawalDTO> withdrawals = withdrawalService.generateWithdrawalDTOList(
+                withdrawalService.list(filter));
+
+        return ResponseEntity.ok(withdrawals);
+    }
+}
