@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Navigation from '../components/navegation/navegation';
 import styles from './home.module.css';
 import { FaQuestionCircle } from 'react-icons/fa';
+import HomeDemandsCard from '../../components/demands/HomeDemandsCard';
 
 export default function Home() {
   // Simulação: troque para true/false para testar
@@ -31,6 +32,7 @@ export default function Home() {
           <FaQuestionCircle />
           <span>Ajuda</span>
         </Link>
+        <HomeDemandsCard />
       </main>
     </div>
   );

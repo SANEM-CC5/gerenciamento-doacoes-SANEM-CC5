@@ -223,3 +223,30 @@ CREATE TABLE collection_point (
 CREATE INDEX idx_withdrawal_date ON withdrawal(withdrawal_date);
 CREATE INDEX idx_donation_date ON donation(donation_date);
 CREATE INDEX idx_collection_point_type ON collection_point(type);
+
+-- ==========================================
+-- 9. DEMANDAS PRIORITÁRIAS (RF20) - migration V11
+-- Sempre vinculadas a um item. "Recebido X de Y" é calculado (não armazenado)
+-- somando item_donated do item desde created_at até o fim do dia do prazo.
+-- Inativar = status INACTIVE (o registro é mantido).
+-- ==========================================
+CREATE TABLE priority_demand (
+    priority_demand_id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    item_id INT NOT NULL,
+    quantity_needed INT NOT NULL,
+    priority ENUM('HIGH', 'MEDIUM', 'LOW') NOT NULL DEFAULT 'MEDIUM',
+    justification VARCHAR(500) NULL,
+    deadline DATE NULL,
+    status ENUM('ACTIVE', 'INACTIVE') NOT NULL DEFAULT 'ACTIVE',
+    created_by_user_id INT NULL,
+    created_at DATETIME(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
+    updated_at DATETIME(6) NULL,
+    inactivated_at DATETIME(6) NULL,
+    CONSTRAINT fk_priority_demand_item FOREIGN KEY (item_id) REFERENCES item(item_id)
+        ON UPDATE RESTRICT ON DELETE RESTRICT,
+    CONSTRAINT fk_priority_demand_user FOREIGN KEY (created_by_user_id) REFERENCES app_user(user_id)
+        ON UPDATE RESTRICT ON DELETE SET NULL,
+    CONSTRAINT chk_priority_demand_quantity CHECK (quantity_needed > 0),
+    INDEX idx_priority_demand_status_priority (status, priority),
+    INDEX idx_priority_demand_item (item_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

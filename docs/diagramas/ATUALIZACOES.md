@@ -11,6 +11,29 @@ Data: 2026-10-20
 
 ---
 
+## RF20 – Demandas prioritárias (2026-11-02)
+
+### Diagrama de Classes
+- Nova classe `PriorityDemand`: `priorityDemandId: Long`, `item: Item`, `quantityNeeded: Long`,
+  `priority: DemandPriority`, `justification: String`, `deadline: LocalDate`,
+  `status: DemandStatus`, `createdBy: AppUser`, `createdAt`, `updatedAt`, `inactivatedAt`;
+  operações `inactivate()`, `reactivate()`, `isActive()`.
+- Associações: `PriorityDemand *——1 Item` e `PriorityDemand *——0..1 AppUser` (quem cadastrou).
+- Novos enums: `DemandPriority` (`HIGH`, `MEDIUM`, `LOW`) e `DemandStatus` (`ACTIVE`, `INACTIVE`).
+- `PriorityDemandService`: CRUD, inativar/reativar e `calculateReceived(PriorityDemand)` — soma das
+  doações (`ItemDonated`) do item desde `createdAt` até o fim do dia do `deadline`.
+
+### Diagrama de Caso de Uso
+- Novo caso de uso **"Gerenciar demandas prioritárias"** (cadastrar, consultar, atualizar,
+  inativar/reativar) — atores Administrador e Funcionário.
+- `<<include>>` "Acompanhar progresso da demanda" (recebido X de Y).
+- `<<extend>>` em "Registrar doação": destaque de itens com demanda ativa.
+
+### MER
+- Nova entidade `priority_demand` (FK `item_id` → `item`; FK opcional `created_by_user_id` → `app_user`).
+
+---
+
 ## 1. Diagrama de Classes (`Diagrama de classes.pdf`)
 
 ### Adicionar a classe `CollectionPoint`

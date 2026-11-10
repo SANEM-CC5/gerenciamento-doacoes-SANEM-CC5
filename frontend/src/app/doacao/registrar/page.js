@@ -27,12 +27,29 @@ export default function RegistrarDoacaoPage() {
     const [searchItem, setSearchItem] = useState("")
 
     const [newItemName, setNewItemName] = useState("")
+    // RF20: itemId -> demanda prioritária ativa (para destacar na busca)
+    const [demandByItem, setDemandByItem] = useState({})
     const [submitting, setSubmitting] = useState(false)
 
     useEffect(() => {
         loadDonors()
         loadItems()
+        loadPriorityDemands()
     }, [])
+
+    const loadPriorityDemands = async () => {
+        try {
+            const data = await apiService.getPriorityDemands({ status: "ACTIVE" })
+            const map = {}
+            ;(data || []).filter((d) => !d.fulfilled).forEach((d) => {
+                // se houver mais de uma demanda para o item, mantém a primeira (já vem ordenada por prioridade)
+                if (!map[d.itemId]) map[d.itemId] = d
+            })
+            setDemandByItem(map)
+        } catch {
+            setDemandByItem({}) // destaque é opcional: não bloqueia o registro da doação
+        }
+    }
 
     const loadDonors = async () => {
         try {
@@ -322,6 +339,12 @@ export default function RegistrarDoacaoPage() {
                                                             Estoque Atual:{" "}
                                                             {item.quantidade}
                                                         </div>
+                                                        {demandByItem[item.id] && (
+                                                            <div className={styles.demandBadge}>
+                                                                Demanda prioritária: faltam{" "}
+                                                                {demandByItem[item.id].quantityRemaining}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 ))
                                             )}
