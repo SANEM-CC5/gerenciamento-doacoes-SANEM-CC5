@@ -7,7 +7,7 @@ import { useRouter } from "next/navigation";
 import apiService from "../../../services/api";
 import { mapBeneficiaryFromBackend, mapBeneficiaryToBackend } from "../../../services/dataMapper";
 import { useApiList } from "../../../hooks/useApi";
-import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown, FaBan, FaUndo } from "react-icons/fa";
+import { FaPlus, FaCheck, FaTimes, FaEdit, FaTrash, FaChevronDown, FaBan, FaUndo, FaFilter } from "react-icons/fa";
 import authService from "../../../services/authService";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
@@ -36,6 +36,7 @@ export default function ListaBeneficiarios() {
   // --- LÓGICA DE FILTROS ---
   const [filters, setFilters] = useState({ name: '', cpfCnpj: '', phone: '', status: '' });
   const [debouncedFilters, setDebouncedFilters] = useState({ name: '', cpfCnpj: '', phone: '', status: '' });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
   
   // Estados para o Dropdown Customizado de Status
   const [activeDropdown, setActiveDropdown] = useState(null);
@@ -427,6 +428,17 @@ export default function ListaBeneficiarios() {
                 onChange={handleFilterChange}
               />
             </div>
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-beneficiary-filters"
+            >
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
+            </button>
+            {showAdvancedFilters && <div id="advanced-beneficiary-filters" className={styles.advancedFiltersPanel}>
             <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input 
                 type="text" 
@@ -511,6 +523,7 @@ export default function ListaBeneficiarios() {
             >
               Limpar
             </button>
+            </div>}
           </div>
 
           {/* TABELA E MODAIS (Continuam iguais ao original) */}

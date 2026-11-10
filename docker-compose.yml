@@ -1,41 +1,16 @@
 services:
-  mysql:
-    image: mysql:8.0
-    container_name: javalovers-mysql
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: sanem
-      MYSQL_USER: sanem
-      MYSQL_PASSWORD: sanem123
-    ports:
-      - "3307:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-      - ./db/script-create-tables.sql:/docker-entrypoint-initdb.d/01-create-tables.sql
-      - ./db/script-insert-values.sql:/docker-entrypoint-initdb.d/02-insert-values.sql
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "sanem", "--password=sanem123"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-      start_period: 40s
-    networks:
-      - javalovers-network
-
   backend:
     build: ./backend
     container_name: javalovers-backend
     restart: always
     ports:
       - "8080:8080"
-    environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/sanem?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
-      SPRING_DATASOURCE_USERNAME: sanem
-      SPRING_DATASOURCE_PASSWORD: sanem123
-    depends_on:
-      mysql:
-        condition: service_healthy
+    # Banco: PostgreSQL hospedado no NeonDB.
+    # As variáveis (SPRING_DATASOURCE_URL/USERNAME/PASSWORD e SPRING_PROFILES_ACTIVE)
+    # vêm do .env (não versionado) e são passadas LITERALMENTE ao container.
+    # Ver .env.example.
+    env_file:
+      - .env
     networks:
       - javalovers-network
 
@@ -52,10 +27,6 @@ services:
     networks:
       - javalovers-network
 
-volumes:
-  mysql_data:
-
 networks:
   javalovers-network:
     driver: bridge
-    

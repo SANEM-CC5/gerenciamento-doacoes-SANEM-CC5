@@ -16,7 +16,15 @@ public class ItemCreateMapper {
             tag = null;
         }
         item.setTagCode(tag);
+<<<<<<< HEAD
         item.setMinimumStock(itemFormDTO.minimumStock());
+=======
+        item.setSize(itemFormDTO.size());
+        item.setGender(itemFormDTO.gender());
+        item.setType(itemFormDTO.type());
+        item.setConditionStatus(itemFormDTO.conditionStatus());
+        item.setLocation(itemFormDTO.location());
+>>>>>>> origin/main
 
         return item;
     }

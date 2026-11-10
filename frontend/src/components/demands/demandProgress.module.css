@@ -1,0 +1,43 @@
+.wrapper { display: flex; flex-direction: column; gap: 6px; }
+.compact { display: flex; flex-direction: column; gap: 4px; }
+
+.labels {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: var(--color-text-light, #444);
+}
+
+.received strong { color: var(--color-text, #18132b); }
+
+.percent {
+  font-weight: 700;
+  color: var(--color-text, #18132b);
+}
+
+.track {
+  width: 100%;
+  height: 10px;
+  border-radius: 6px;
+  background: #e8ecf2;
+  overflow: hidden;
+}
+
+.compact .track { height: 8px; }
+
+.bar {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.4s ease;
+}
+
+.low { background: var(--color-secondary, #e08a1e); }
+.mid { background: var(--color-primary, #1976d2); }
+.done { background: var(--color-success, #43a047); }
+
+.remaining {
+  font-size: 0.8rem;
+  color: #777;
+}

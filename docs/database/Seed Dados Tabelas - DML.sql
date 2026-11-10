@@ -1,9 +1,9 @@
 -- =====================================================================
--- DML - Seed alinhado ao esquema real (MySQL 8.0)
+-- DML - Seed alinhado ao esquema real (PostgreSQL / NeonDB)
 -- Usa os nomes de tabelas/colunas efetivamente implementados.
--- Seed executável equivalente: db/script-insert-values.sql
+-- Seed executável equivalente: db/script-insert-values.sql e
+-- backend/src/main/resources/db/migration/V2__seed_data.sql
 -- =====================================================================
-USE sanem;
 
 -- ==========================================
 -- 1. PERFIS E USUÁRIOS

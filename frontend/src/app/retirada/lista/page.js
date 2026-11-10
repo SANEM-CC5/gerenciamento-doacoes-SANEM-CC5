@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import styles from "./lista.module.css";
 import apiService from "../../../services/api";
 import { useNotification } from "../../../components/notifications/NotificationProvider";
-import { FaPlus, FaTrash, FaMinus, FaChevronDown, FaTimes } from "react-icons/fa";
+import { FaPlus, FaTrash, FaMinus, FaChevronDown, FaTimes, FaFilter } from "react-icons/fa";
 import ConfirmationModal from "../../../components/confirmation/ConfirmationModal";
 import { mapBeneficiaryFromBackend, mapItemFromBackend } from "../../../services/dataMapper";
 import authService from "../../../services/authService";
@@ -52,6 +52,7 @@ export default function ListaRetiradasPage() {
     attendantName: "",
     itemName: ""
   });
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
 
   const [activeDropdown, setActiveDropdown] = useState(null);
   const [filterOptions, setFilterOptions] = useState({
@@ -478,69 +479,49 @@ export default function ListaRetiradasPage() {
 
           {/* BARRA DE FILTROS ENVOLVIDA PELA REF */}
           <div className={styles.filtersContainer} ref={dropdownRef}>
-            <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
-              <input
-                type="date"
-                name="startDate"
-                value={filters.startDate}
-                onChange={handleDateChange}
-                title="Data Inicial"
-              />
-            </div>
-            <span className={styles.dateSeparator}>até</span>
-            <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
-              <input
-                type="date"
-                name="endDate"
-                value={filters.endDate}
-                onChange={handleDateChange}
-                title="Data Final"
-              />
-            </div>
-
-            {/* SELECT COM PESQUISA: Beneficiário */}
-            <div className={`${styles.formGroup} ${styles.filterGroupText}`} style={{ position: "relative" }}>
+            <div className={`${styles.formGroup} ${styles.filterGroupText}`}>
               <input
                 type="text"
-                placeholder="Filtrar por Beneficiário..."
+                placeholder="Filtrar por nome do beneficiário..."
                 value={inputValues.beneficiaryName}
-                onChange={(e) => handleTextTyping("beneficiaryName", e.target.value)}
-                onClick={() => setActiveDropdown("beneficiaryName")}
-                autoComplete="off"
-                style={{ paddingRight: "60px" }}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setInputValues(prev => ({ ...prev, beneficiaryName: value }));
+                  setFilters(prev => ({ ...prev, beneficiaryName: value }));
+                }}
               />
-              {inputValues.beneficiaryName && (
-                <FaTimes
-                  className={styles.clearIcon}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleOptionSelect("beneficiaryName", "");
-                  }}
-                  title="Limpar Beneficiário"
+            </div>
+            <button
+              type="button"
+              className={styles.advancedFiltersButton}
+              onClick={() => setShowAdvancedFilters(prev => !prev)}
+              aria-expanded={showAdvancedFilters}
+              aria-controls="advanced-withdrawal-filters"
+            >
+              <FaFilter aria-hidden="true" />
+              <span>Avançado</span>
+            </button>
+            {showAdvancedFilters && <div id="advanced-withdrawal-filters" className={styles.advancedFiltersPanel}>
+            <div className={styles.dateRangeFilter}>
+              <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+                <input
+                  type="date"
+                  name="startDate"
+                  value={filters.startDate}
+                  onChange={handleDateChange}
+                  title="Data Inicial"
                 />
-              )}
-              <FaChevronDown
-                className={styles.selectIcon}
-                style={{ transform: activeDropdown === "beneficiaryName" ? "translateY(-50%) rotate(180deg)" : "translateY(-50%)" }}
-              />
-              {activeDropdown === "beneficiaryName" && (
-                <div className={styles.filterDropdown}>
-                  {filterOptions.beneficiaries
-                    .filter(opt => opt.toLowerCase().includes(inputValues.beneficiaryName.toLowerCase()))
-                    .map((opt, idx) => (
-                      <div
-                        key={idx}
-                        className={styles.filterDropdownItem}
-                        onClick={() => handleOptionSelect("beneficiaryName", opt)}
-                      >
-                        {opt}
-                      </div>
-                    ))}
-                  {filterOptions.beneficiaries.filter(opt => opt.toLowerCase().includes(inputValues.beneficiaryName.toLowerCase())).length === 0 && (
-                    <div className={styles.filterDropdownItemEmpty}>Nenhum beneficiário encontrado</div>
-                  )}
-                </div>
-              )}
+              </div>
+              <span className={styles.dateSeparator}>até</span>
+              <div className={`${styles.formGroup} ${styles.filterGroupDate}`}>
+                <input
+                  type="date"
+                  name="endDate"
+                  value={filters.endDate}
+                  onChange={handleDateChange}
+                  title="Data Final"
+                />
+              </div>
             </div>
 
             {/* SELECT COM PESQUISA: Atendente */}
@@ -640,6 +621,7 @@ export default function ListaRetiradasPage() {
             >
               Limpar
             </button>
+          </div>}
           </div>
           {/* FIM BARRA DE FILTROS */}
 
