@@ -80,12 +80,12 @@ O sistema tem como objetivo o gerenciamento de um brechó beneficente que distri
 ## 📁 Estrutura do Projeto
 
 ```
-JavaLovers/
+Sanem/
 ├── backend/                    # Backend Java Spring Boot
 │   ├── src/
 │   │   ├── main/
-│   │   │   ├── java/com/javalovers/
-│   │   │   │   ├── JavaLoversApplication.java
+│   │   │   ├── java/com/sanem/
+│   │   │   │   ├── SanemApplication.java
 │   │   │   │   ├── common/                 # Config, segurança, utilidades, soft delete
 │   │   │   │   └── core/                   # Módulos de domínio
 │   │   │   │       ├── beneficiary/        # Beneficiários (CRUD + status INACTIVE)
@@ -183,7 +183,7 @@ JavaLovers/
     export SPRING_DATASOURCE_PASSWORD="<senha>"
 
     mvn clean package
-    java -jar target/javalovers-backend-1.0.0.jar
+    java -jar target/sanem-backend-1.0.0.jar
     ```
 
 #### Frontend

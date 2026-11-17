@@ -5,7 +5,7 @@ server:
 
 spring:
   application:
-    name: javalovers-backend
+    name: sanem-backend
 
   datasource:
     # PostgreSQL (NeonDB). Valores reais vêm do ambiente (.env):
@@ -38,7 +38,7 @@ spring:
 
 logging:
   level:
-    com.javalovers: DEBUG
+    com.sanem: DEBUG
     org.springframework.security: DEBUG
 
 

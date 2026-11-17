@@ -116,7 +116,7 @@ O domínio de `beneficiary_status` passa a incluir `INACTIVE`:
 ---
 
 ## Referências de implementação
-- Backend: `backend/src/main/java/com/javalovers/core/collectionpoint/` (entidade, enum, DTOs,
+- Backend: `backend/src/main/java/com/sanem/core/collectionpoint/` (entidade, enum, DTOs,
   mapper, repository, specification, service, controller).
 - Migrations: `backend/src/main/resources/db/migration/V8__create_collection_point.sql` e
   `V9__add_inactive_beneficiary_status.sql`.

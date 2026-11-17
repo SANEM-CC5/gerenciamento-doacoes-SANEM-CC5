@@ -1,7 +1,7 @@
 services:
   backend:
     build: ./backend
-    container_name: javalovers-backend
+    container_name: sanem-backend
     restart: always
     ports:
       - "8080:8080"
@@ -12,11 +12,11 @@ services:
     env_file:
       - .env
     networks:
-      - javalovers-network
+      - sanem-network
 
   frontend:
     build: ./frontend
-    container_name: javalovers-frontend
+    container_name: sanem-frontend
     restart: always
     ports:
       - "3000:3000"
@@ -25,8 +25,8 @@ services:
     depends_on:
       - backend
     networks:
-      - javalovers-network
+      - sanem-network
 
 networks:
-  javalovers-network:
+  sanem-network:
     driver: bridge
