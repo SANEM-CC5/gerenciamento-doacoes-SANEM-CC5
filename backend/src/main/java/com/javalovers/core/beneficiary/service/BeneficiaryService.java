@@ -1,5 +1,7 @@
 package com.javalovers.core.beneficiary.service;
 
+import com.javalovers.common.crypto.DataEncryptionService;
+import com.javalovers.common.crypto.FieldEncryptor;
 import com.javalovers.common.exception.EntityNotFoundException;
 import com.javalovers.common.specification.SearchCriteria;
 import com.javalovers.common.specification.SpecificationHelper;
@@ -21,6 +23,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.Query;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -28,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.hibernate.Hibernate;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 @Service
@@ -41,13 +45,32 @@ public class BeneficiaryService {
     private final CardRepository cardRepository;
     private final EntityManager entityManager;
     private final AppUserService appUserService;
+    private final DataEncryptionService dataEncryptionService;
+
+    /** Documento completo (CPF tem 11 dígitos): busca exata pelo índice cego, direto no banco. */
+    private static final int FULL_DOCUMENT_LENGTH = 11;
 
     public Beneficiary generateBeneficiary(BeneficiaryFormDTO beneficiaryFormDTO) {
         return beneficiaryCreateMapper.convert(beneficiaryFormDTO);
     }
 
     public void save (Beneficiary beneficiary) {
+        ensureDocumentIsUnique(beneficiary);
         beneficiaryRepository.save(beneficiary);
+    }
+
+    /**
+     * RNF12: com o CPF criptografado (IV aleatório), a restrição UNIQUE na coluna cpf deixou de
+     * funcionar. A unicidade passa a ser garantida pelo índice cego (cpf_hash), com mensagem clara.
+     */
+    private void ensureDocumentIsUnique(Beneficiary beneficiary) {
+        String index = dataEncryptionService.documentIndex(beneficiary.getCpf());
+        if (index == null) return;
+        beneficiaryRepository.findFirstByCpfHash(index)
+                .filter(other -> !other.getBeneficiaryId().equals(beneficiary.getBeneficiaryId()))
+                .ifPresent(other -> {
+                    throw new IllegalStateException("Já existe um beneficiário cadastrado com este CPF/CRNM.");
+                });
     }
 
     @Transactional(readOnly = true)
@@ -114,13 +137,14 @@ public class BeneficiaryService {
     @Transactional(readOnly = true)
     public List<Beneficiary> list(BeneficiaryFilterDTO beneficiaryFilterDTO) {
         Specification<Beneficiary> beneficiarySpecification = generateSpecification(beneficiaryFilterDTO);
-        return beneficiaryRepository.findAll(beneficiarySpecification);
+        return applyEncryptedFieldFilters(beneficiaryRepository.findAll(beneficiarySpecification), beneficiaryFilterDTO);
     }
 
     @Transactional(readOnly = true)
     public List<BeneficiaryDTO> listAsDTO(BeneficiaryFilterDTO beneficiaryFilterDTO) {
         Specification<Beneficiary> beneficiarySpecification = generateSpecification(beneficiaryFilterDTO);
-        List<Beneficiary> beneficiaries = beneficiaryRepository.findAll(beneficiarySpecification);
+        List<Beneficiary> beneficiaries = applyEncryptedFieldFilters(
+                beneficiaryRepository.findAll(beneficiarySpecification), beneficiaryFilterDTO);
         // Force eager loading of approverId and its profile to avoid LazyInitializationException
         beneficiaries.forEach(b -> {
             if (b.getApproverId() != null) {
@@ -136,19 +160,75 @@ public class BeneficiaryService {
     @Transactional(readOnly = true)
     public Page<Beneficiary> list(Pageable pageable, BeneficiaryFilterDTO beneficiaryFilterDTO) {
         Specification<Beneficiary> beneficiarySpecification = generateSpecification(beneficiaryFilterDTO);
-        return beneficiaryRepository.findAll(beneficiarySpecification, pageable);
+        if (!hasInMemoryFilters(beneficiaryFilterDTO)) {
+            return beneficiaryRepository.findAll(beneficiarySpecification, pageable);
+        }
+        // Filtro parcial em campo criptografado: filtra em memória e pagina o resultado
+        List<Beneficiary> filtered = applyEncryptedFieldFilters(
+                beneficiaryRepository.findAll(beneficiarySpecification, pageable.getSort()), beneficiaryFilterDTO);
+        if (pageable.isUnpaged()) {
+            return new PageImpl<>(filtered, pageable, filtered.size());
+        }
+        int from = (int) Math.min(pageable.getOffset(), filtered.size());
+        int to = Math.min(from + pageable.getPageSize(), filtered.size());
+        return new PageImpl<>(filtered.subList(from, to), pageable, filtered.size());
+    }
+
+    // ---------------------------------------------------------------------------------
+    // RNF12: CPF, telefone e dados socioeconômicos estão criptografados no banco, então
+    // LIKE no SQL não funciona mais. CPF completo usa o índice cego (exato, no banco);
+    // buscas parciais são aplicadas em memória, sobre os valores já descriptografados.
+    // ---------------------------------------------------------------------------------
+
+    private boolean isFullDocumentSearch(String document) {
+        String normalized = FieldEncryptor.normalizeDocument(document);
+        return normalized != null && normalized.length() >= FULL_DOCUMENT_LENGTH;
+    }
+
+    private boolean hasInMemoryFilters(BeneficiaryFilterDTO filter) {
+        return (hasText(filter.cpf()) && !isFullDocumentSearch(filter.cpf()))
+                || hasText(filter.phone())
+                || hasText(filter.socioeconomicData());
+    }
+
+    private List<Beneficiary> applyEncryptedFieldFilters(List<Beneficiary> beneficiaries, BeneficiaryFilterDTO filter) {
+        if (!hasInMemoryFilters(filter)) return beneficiaries;
+
+        String cpf = hasText(filter.cpf()) && !isFullDocumentSearch(filter.cpf())
+                ? FieldEncryptor.normalizeDocument(filter.cpf()) : null;
+        String phone = hasText(filter.phone()) ? filter.phone().replaceAll("\\D", "") : null;
+        String socio = hasText(filter.socioeconomicData()) ? filter.socioeconomicData().toLowerCase(Locale.ROOT) : null;
+
+        return beneficiaries.stream()
+                .filter(b -> cpf == null || contains(FieldEncryptor.normalizeDocument(b.getCpf()), cpf))
+                .filter(b -> phone == null || phone.isEmpty()
+                        || contains(b.getPhone() == null ? null : b.getPhone().replaceAll("\\D", ""), phone))
+                .filter(b -> socio == null
+                        || contains(b.getSocioeconomicData() == null ? null : b.getSocioeconomicData().toLowerCase(Locale.ROOT), socio))
+                .toList();
+    }
+
+    private static boolean contains(String value, String term) {
+        return value != null && value.contains(term);
+    }
+
+    private static boolean hasText(String value) {
+        return value != null && !value.isBlank();
     }
 
     private Specification<Beneficiary> generateSpecification(BeneficiaryFilterDTO beneficiaryFilterDTO) {
         SearchCriteria<String> fullNameCriteria = SpecificationHelper.generateInnerLikeCriteria("fullName", beneficiaryFilterDTO.fullName());
-        SearchCriteria<String> cpfCriteria = SpecificationHelper.generateInnerLikeCriteria("cpf", beneficiaryFilterDTO.cpf());
-        SearchCriteria<String> phoneCriteria = SpecificationHelper.generateInnerLikeCriteria("phone", beneficiaryFilterDTO.phone());
-        SearchCriteria<String> socioeconomicDataCriteria = SpecificationHelper.generateInnerLikeCriteria("socioeconomicData", beneficiaryFilterDTO.socioeconomicData());
-
         Specification<Beneficiary> fullNameSpecification = new BeneficiarySpecification(fullNameCriteria);
-        Specification<Beneficiary> cpfSpecification = new BeneficiarySpecification(cpfCriteria);
-        Specification<Beneficiary> phoneSpecification = new BeneficiarySpecification(phoneCriteria);
-        Specification<Beneficiary> socioeconomicDataSpecification = new BeneficiarySpecification(socioeconomicDataCriteria);
+
+        // RNF12: CPF completo -> igualdade no índice cego. Parcial, telefone e dados
+        // socioeconômicos são filtrados em memória (applyEncryptedFieldFilters).
+        Specification<Beneficiary> cpfSpecification = (root, query, criteriaBuilder) -> {
+            if (!isFullDocumentSearch(beneficiaryFilterDTO.cpf())) {
+                return criteriaBuilder.conjunction();
+            }
+            return criteriaBuilder.equal(root.get("cpfHash"),
+                    dataEncryptionService.documentIndex(beneficiaryFilterDTO.cpf()));
+        };
         
         Specification<Beneficiary> statusSpecification = (root, query, criteriaBuilder) -> {
             if (beneficiaryFilterDTO.beneficiaryStatus() == null) {
@@ -162,8 +242,6 @@ public class BeneficiaryService {
 
         return Specification.where(fullNameSpecification)
                 .and(cpfSpecification)
-                .and(phoneSpecification)
-                .and(socioeconomicDataSpecification)
                 .and(statusSpecification) 
                 .and(notDeletedSpecification);
     }

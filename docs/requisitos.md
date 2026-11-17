@@ -30,6 +30,7 @@
 | RNF05 | A interface deve possuir boa acessibilidade |
 | RNF06 | O sistema deve estar disponível durante os horários de funcionamento do brechó |
 | RNF07 | O sistema deve realizar backup automático diário do banco de dados, com possibilidade de restauração em caso de falha |
+| RNF12 | Os documentos pessoais dos beneficiários devem ser criptografados ao serem cadastrados no banco de dados, conforme a LGPD (Lei 13.709/2018, art. 6º, VII e art. 46) |
 
 ---
 

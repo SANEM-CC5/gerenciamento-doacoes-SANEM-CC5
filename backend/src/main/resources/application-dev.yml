@@ -6,3 +6,10 @@
 spring:
   flyway:
     locations: classpath:db/migration,classpath:db/seed
+
+# RNF12 – chave de criptografia SOMENTE para desenvolvimento/testes, para que toda a
+# equipe leia os mesmos dados do banco de desenvolvimento. É pública (está no repositório),
+# portanto NUNCA use esta chave em produção. Se SANEM_ENCRYPTION_KEY estiver no .env, ela prevalece.
+sanem:
+  security:
+    encryption-key: ${SANEM_ENCRYPTION_KEY:hBFF190sJTvwqtIS4oyI/Dn0RMHm21IRZ+rgvxLCXqk=}

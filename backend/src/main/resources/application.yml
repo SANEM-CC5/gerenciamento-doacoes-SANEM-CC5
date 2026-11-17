@@ -43,6 +43,12 @@ logging:
 
 
 sanem:
+  security:
+    # RNF12 / LGPD – chave mestra (Base64, 32 bytes) que criptografa CPF/CRNM, telefone e
+    # dados socioeconômicos dos beneficiários. OBRIGATÓRIA: sem ela a aplicação não inicia.
+    # Gere com:  openssl rand -base64 32   e informe SANEM_ENCRYPTION_KEY no .env.
+    # ATENÇÃO: perder a chave = perder o acesso a esses dados. Guarde-a fora do repositório.
+    encryption-key: ${SANEM_ENCRYPTION_KEY:}
   notifications:
     # RF19 – perfis que recebem alerta quando um item atinge o estoque mínimo
     # (comparação sem diferenciar maiúsculas/minúsculas com profile.name)
