@@ -16,18 +16,32 @@ const EditarItem = () => {
   const { loading, error, execute, clearError } = useApi();
   const { showNotification } = useNotification();
   const [loadingData, setLoadingData] = useState(true);
+  const [categories, setCategories] = useState([]);
   
   const [form, setForm] = useState({
     nome: "",
     quantidade: "",
     tagCode: "",
     estoqueMinimo: "",
-    size: "",
-    gender: "",
+    categoriaId: "",
+    tamanho: "",
+    estadoConservacao: "",
+    genero: "",
     type: "",
-    conditionStatus: "",
     location: ""
   });
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const cats = await apiService.getCategories();
+        setCategories(Array.isArray(cats) ? cats : []);
+      } catch (err) {
+        console.error("Erro ao carregar categorias:", err);
+      }
+    };
+    loadCategories();
+  }, []);
 
   useEffect(() => {
     const loadItem = async () => {
@@ -38,13 +52,13 @@ const EditarItem = () => {
         setForm({
           nome: mappedItem.nome || "",
           quantidade: mappedItem.quantidade ?? "",
-          // preservados para não serem apagados no PUT
           tagCode: mappedItem.tagCode || "",
           estoqueMinimo: mappedItem.estoqueMinimo ?? "",
-          size: mappedItem.size || "",
-          gender: mappedItem.gender || "",
+          categoriaId: mappedItem.categoriaId ? String(mappedItem.categoriaId) : "",
+          tamanho: mappedItem.tamanho || "",
+          estadoConservacao: mappedItem.estadoConservacao || "",
+          genero: mappedItem.genero || "",
           type: mappedItem.type || "",
-          conditionStatus: mappedItem.conditionStatus || "",
           location: mappedItem.location || ""
         });
       } catch (err) {
@@ -59,11 +73,11 @@ const EditarItem = () => {
     if (id) {
       loadItem();
     }
-  }, [id, router]);
+  }, [id, router, showNotification]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
+    setForm(prev => ({ ...prev, [name]: value }));
   };
 
   async function handleSubmit(e) {
@@ -71,13 +85,11 @@ const EditarItem = () => {
     clearError();
 
     try {
-      // Prepara dados para o backend
       const itemData = mapItemToBackend({
         ...form,
         quantidade: Number(form.quantidade)
       });
 
-      // Chama a API de atualização
       await execute(() => apiService.updateItem(id, itemData));
       
       showNotification("Item atualizado com sucesso!", "success");
@@ -111,7 +123,7 @@ const EditarItem = () => {
           <div className={styles.decoracao}></div>
           <form onSubmit={handleSubmit} className={styles.formulario} style={{ maxWidth: '600px', margin: '0 auto' }}>
             <div className={styles.formGroup}>
-              <label htmlFor="nome"><b>Nome*</b></label>
+              <label htmlFor="nome"><b>Nome / Descrição *</b></label>
               <input 
                 id="nome" 
                 name="nome" 
@@ -122,20 +134,145 @@ const EditarItem = () => {
                 placeholder="Nome do item" 
               />
             </div>
-            <div className={styles.formGroup}>
-              <label htmlFor="quantidade"><b>Quantidade*</b></label>
-              <input 
-                id="quantidade" 
-                name="quantidade" 
-                type="number" 
-                min={0}
-                className={styles.formInput}
-                value={form.quantidade} 
-                onChange={handleChange} 
-                required 
-                placeholder="Quantidade" 
-              />
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="categoriaId"><b>Categoria</b></label>
+                <select
+                  id="categoriaId"
+                  name="categoriaId"
+                  value={form.categoriaId}
+                  onChange={handleChange}
+                  className={styles.formInput}
+                >
+                  <option value="">Selecione uma categoria...</option>
+                  {categories.map(cat => (
+                    <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="tamanho"><b>Tamanho</b></label>
+                <input 
+                  id="tamanho"
+                  name="tamanho"
+                  type="text"
+                  className={styles.formInput}
+                  value={form.tamanho} 
+                  onChange={handleChange} 
+                  placeholder="Ex: P, M, G, 40, Único"
+                  list="editPageTamanhosList"
+                />
+                <datalist id="editPageTamanhosList">
+                  <option value="PP" />
+                  <option value="P" />
+                  <option value="M" />
+                  <option value="G" />
+                  <option value="GG" />
+                  <option value="XG" />
+                  <option value="34" />
+                  <option value="36" />
+                  <option value="38" />
+                  <option value="40" />
+                  <option value="42" />
+                  <option value="44" />
+                  <option value="Único" />
+                </datalist>
+              </div>
             </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="estadoConservacao"><b>Estado de Conservação</b></label>
+                <select
+                  id="estadoConservacao"
+                  name="estadoConservacao"
+                  value={form.estadoConservacao}
+                  onChange={handleChange}
+                  className={styles.formInput}
+                >
+                  <option value="">Selecione o estado...</option>
+                  <option value="Novo">Novo</option>
+                  <option value="Seminovo">Seminovo</option>
+                  <option value="Usado - Bom estado">Usado - Bom estado</option>
+                  <option value="Usado - Regular">Usado - Regular</option>
+                </select>
+              </div>
+
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="genero"><b>Gênero / Destinação</b></label>
+                <select
+                  id="genero"
+                  name="genero"
+                  value={form.genero}
+                  onChange={handleChange}
+                  className={styles.formInput}
+                >
+                  <option value="">Selecione...</option>
+                  <option value="Masculino">Masculino</option>
+                  <option value="Feminino">Feminino</option>
+                  <option value="Infantil">Infantil</option>
+                  <option value="Unissex">Unissex</option>
+                  <option value="Não aplicável">Não aplicável</option>
+                </select>
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="tagCode"><b>Código / Tag (Opcional)</b></label>
+                <input 
+                  id="tagCode" 
+                  name="tagCode" 
+                  className={styles.formInput}
+                  value={form.tagCode} 
+                  onChange={handleChange} 
+                  placeholder="Ex: PROD-ABC-123" 
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="quantidade"><b>Quantidade *</b></label>
+                <input 
+                  id="quantidade" 
+                  name="quantidade" 
+                  type="number" 
+                  min={0}
+                  className={styles.formInput}
+                  value={form.quantidade} 
+                  onChange={handleChange} 
+                  required 
+                  placeholder="Quantidade" 
+                />
+              </div>
+            </div>
+            <div className={styles.formRow}>
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="type"><b>Tipo (Opcional)</b></label>
+                <input
+                  id="type"
+                  name="type"
+                  className={styles.formInput}
+                  value={form.type}
+                  onChange={handleChange}
+                  placeholder="Ex: Camisa, Calça..."
+                />
+              </div>
+
+              <div className={styles.formGroup} style={{ flex: 1 }}>
+                <label htmlFor="location"><b>Localização (Opcional)</b></label>
+                <input
+                  id="location"
+                  name="location"
+                  className={styles.formInput}
+                  value={form.location}
+                  onChange={handleChange}
+                  placeholder="Ex: Medianeira"
+                />
+              </div>
+            </div>
+
             <div className={styles.formGroup}>
               <label htmlFor="estoqueMinimo"><b>Estoque mínimo</b></label>
               <input 
@@ -154,7 +291,7 @@ const EditarItem = () => {
               </small>
             </div>
             
-            <div className={styles.modalButtonGroup}>
+            <div className={styles.modalButtonGroup} style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '24px' }}>
               <button 
                 type="button" 
                 className={styles.cancelButton} 
@@ -179,4 +316,3 @@ const EditarItem = () => {
 };
 
 export default EditarItem;
-

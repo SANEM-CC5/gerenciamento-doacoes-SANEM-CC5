@@ -19,11 +19,14 @@ public class AuthService {
   private final JwtService jwtService;
 
   public LoginResponseDTO authenticate(LoginRequestDTO loginRequest) {
-      AppUser user = appUserRepository.findByLogin(loginRequest.getLogin())
-          .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+      String identifier = loginRequest.getLogin() != null ? loginRequest.getLogin().trim() : "";
+      AppUser user = appUserRepository.findByLoginAndDeletedAtIsNull(identifier)
+          .or(() -> appUserRepository.findByLoginIgnoreCaseAndDeletedAtIsNull(identifier))
+          .or(() -> appUserRepository.findByEmailIgnoreCaseAndDeletedAtIsNull(identifier))
+          .orElseThrow(() -> new RuntimeException("Usuário ou senha incorretos"));
 
       if (!passwordEncoder.matches(loginRequest.getPassword(), user.getPasswordHash())) {
-          throw new RuntimeException("Senha incorreta");
+          throw new RuntimeException("Usuário ou senha incorretos");
       }
 
       if (user.getStatus() != com.javalovers.core.status.Status.ACTIVE) {
@@ -43,9 +46,12 @@ public class AuthService {
 
   public AppUser getCurrentUser() {
       var auth = SecurityContextHolder.getContext().getAuthentication();
+      if (auth == null || auth.getName() == null) {
+          throw new RuntimeException("Usuário não autenticado");
+      }
       String login = auth.getName();
-    return appUserRepository.findByLogin(login)
-        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+      return appUserRepository.findByLoginAndDeletedAtIsNull(login)
+          .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
   }
 
   public boolean validateToken(String token) {

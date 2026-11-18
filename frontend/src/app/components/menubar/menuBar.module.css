@@ -1,6 +1,7 @@
 .menuBar {
-  width: calc(100% - 220px);
-  left: 220px;
+  width: calc(100% - var(--sidebar-width, 220px));
+  left: var(--sidebar-width, 220px);
+  transition: left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   height: 56px;
   background: #fff;
   display: flex;
@@ -22,12 +23,31 @@
   margin-right: 32px;
 }
 
-.userInfo {
+.userMenuContainer {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 8px;
+}
+
+.userInfoButton {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 1rem;
+  font-weight: 500;
   color: #444;
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  box-shadow: none;
+  cursor: pointer;
+  letter-spacing: 0;
+  transition: background 0.2s ease;
+}
+
+.userInfoButton:hover {
+  background: #f5f6fa;
 }
 
 .userName {
@@ -36,9 +56,102 @@
 }
 
 .arrowDown {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   color: #b0b4be;
-  margin-left: 2px;
+  margin-left: 4px;
+  transition: transform 0.2s ease;
+}
+
+.arrowOpen {
+  transform: rotate(180deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 240px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+  padding: 8px 0;
+  z-index: 150;
+}
+
+.dropdownHeader {
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dropdownName {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.dropdownEmail {
+  font-size: 0.82rem;
+  color: #64748b;
+  word-break: break-word;
+}
+
+.dropdownRole {
+  display: inline-block;
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 2px 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border-radius: 999px;
+  background: rgba(25, 118, 210, 0.1);
+  color: var(--color-primary);
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: #f1f5f9;
+  margin: 6px 0;
+}
+
+.dropdownItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--color-text);
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 0.92rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dropdownItem:hover {
+  background: #f5f7fb;
+  color: var(--color-primary);
+}
+
+.dropdownItemDanger {
+  color: var(--color-error);
+}
+
+.dropdownItemDanger:hover {
+  background: rgba(192, 57, 43, 0.08);
+  color: var(--color-error);
+}
+
+.dropdownIcon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
 }
 
 .iconWrapper {
@@ -69,7 +182,8 @@
   top: -2px;
   right: 0px;
   z-index: 2;
-} 
+}
+
 /* RNF11 – botão que inicia o tour guiado da tela atual */
 .tourButton {
   display: inline-flex;

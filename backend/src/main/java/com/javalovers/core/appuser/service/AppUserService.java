@@ -3,6 +3,7 @@ package com.javalovers.core.appuser.service;
 import com.javalovers.common.exception.EntityNotFoundException;
 import com.javalovers.core.appuser.domain.dto.request.AppUserFormDTO;
 import com.javalovers.core.appuser.domain.dto.request.AppUserUpdateDTO;
+import com.javalovers.core.appuser.domain.dto.request.ChangePasswordRequestDTO;
 import com.javalovers.core.appuser.domain.dto.response.AppUserDTO;
 import com.javalovers.core.appuser.domain.entity.AppUser;
 import com.javalovers.core.appuser.mapper.AppUserCreateMapper;
@@ -12,7 +13,9 @@ import com.javalovers.core.appuser.repository.AppUserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -25,6 +28,31 @@ public class AppUserService {
     private final AppUserDTOMapper appUserDTOMapper;
     private final AppUserUpdateMapper appUserUpdateMapper;
     private final AuthService authService;
+    private final PasswordEncoder passwordEncoder;
+
+    public AppUserDTO getCurrentUserProfile() {
+        return generateUserDTO(authService.getCurrentUser());
+    }
+
+    @Transactional
+    public void changeCurrentUserPassword(ChangePasswordRequestDTO dto) {
+        AppUser currentUser = authService.getCurrentUser();
+
+        if (!passwordEncoder.matches(dto.currentPassword(), currentUser.getPasswordHash())) {
+            throw new IllegalArgumentException("Senha atual incorreta.");
+        }
+
+        if (!dto.newPassword().equals(dto.confirmPassword())) {
+            throw new IllegalArgumentException("A confirmação da nova senha não confere.");
+        }
+
+        if (passwordEncoder.matches(dto.newPassword(), currentUser.getPasswordHash())) {
+            throw new IllegalArgumentException("A nova senha deve ser diferente da senha atual.");
+        }
+
+        currentUser.setPasswordHash(passwordEncoder.encode(dto.newPassword()));
+        appUserRepository.save(currentUser);
+    }
 
     public AppUser generateUser(AppUserFormDTO appUserFormDTO) {
         return appUserCreateMapper.convert(appUserFormDTO);

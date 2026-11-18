@@ -1,7 +1,8 @@
 .container {
   min-height: 100vh;
   background: #f5f6fa;
-  margin-left: 220px; /* largura do Navigation */
+  margin-left: var(--sidebar-width, 220px);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1); /* largura do Navigation */
 }
 
 .main {

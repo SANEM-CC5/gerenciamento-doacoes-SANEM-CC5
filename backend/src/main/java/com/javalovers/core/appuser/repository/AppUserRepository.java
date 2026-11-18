@@ -13,11 +13,17 @@ import java.util.Optional;
 
 @Repository
 public interface AppUserRepository extends JpaRepository<AppUser, Long> {
-  Optional<AppUser> findByLogin(String login);
+    Optional<AppUser> findByLogin(String login);
 
-  /** Usuários ativos e não excluídos cujo perfil (case-insensitive) está na lista informada (em minúsculas). */
-  @Query("SELECT u FROM AppUser u WHERE u.status = :status AND u.deletedAt IS NULL " +
-         "AND u.profile.deletedAt IS NULL AND LOWER(u.profile.name) IN :profileNames")
-  List<AppUser> findActiveByProfileNames(@Param("status") Status status,
-                                         @Param("profileNames") Collection<String> profileNames);
+    Optional<AppUser> findByLoginAndDeletedAtIsNull(String login);
+
+    Optional<AppUser> findByLoginIgnoreCaseAndDeletedAtIsNull(String login);
+
+    Optional<AppUser> findByEmailIgnoreCaseAndDeletedAtIsNull(String email);
+
+    /** Usuários ativos e não excluídos cujo perfil (case-insensitive) está na lista informada (em minúsculas). */
+    @Query("SELECT u FROM AppUser u WHERE u.status = :status AND u.deletedAt IS NULL " +
+           "AND u.profile.deletedAt IS NULL AND LOWER(u.profile.name) IN :profileNames")
+    List<AppUser> findActiveByProfileNames(@Param("status") Status status,
+                                           @Param("profileNames") Collection<String> profileNames);
 }

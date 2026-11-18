@@ -33,7 +33,7 @@ class ApiService {
             if (!response.ok) {
                 const errorData = await response.json().catch(() => ({}));
                 const apiError = new Error(
-                    errorData?.message || errorData?.error || `HTTP error! status: ${response.status}`
+                    errorData?.details || errorData?.message || errorData?.error || `HTTP error! status: ${response.status}`
                 );
                 apiError.status = response.status;
                 apiError.response = errorData;
@@ -160,6 +160,17 @@ class ApiService {
     }
 
     // Métodos para Usuários
+    async getMyProfile() {
+        return this.request("/user/me")
+    }
+
+    async changeMyPassword(passwordData) {
+        return this.request("/user/me/password", {
+            method: "PATCH",
+            body: JSON.stringify(passwordData)
+        })
+    }
+
     async getUsers() {
         return this.request("/user/all")
     }
@@ -497,6 +508,43 @@ class ApiService {
         });
     }
 
+    // Metodos para Exportacao de Relatorios Gerenciais (PDF e CSV)
+    async exportReport(type, format, filters = {}) {
+        const cleanFilters = Object.fromEntries(
+            Object.entries(filters).filter(([_, v]) => v !== "" && v !== null && v !== undefined)
+        );
+        const queryParams = new URLSearchParams(cleanFilters).toString();
+        const endpoint = `/report/${type}/${format.toLowerCase()}${queryParams ? `?${queryParams}` : ""}`;
+        const url = `${this.baseURL}${endpoint}`;
+
+        const token = authService.getToken();
+        const authHeader = token ? { Authorization: `Bearer ${token}` } : {};
+
+        const response = await fetch(url, {
+            headers: {
+                ...authHeader
+            }
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.details || errorData.message || `Erro ao exportar relatorio (${response.status})`);
+        }
+
+        const blob = await response.blob();
+        const blobUrl = window.URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        const extension = format.toLowerCase();
+        link.download = `relatorio_${type}_${new Date().toISOString().slice(0, 10)}.${extension}`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(blobUrl);
+
+        return { success: true };
+    }
+
     // Métodos para Notificações (RF19 - estoque mínimo)
     async getNotifications({ unreadOnly = false, limit = 20 } = {}) {
         const queryParams = new URLSearchParams({ unreadOnly, limit }).toString()
@@ -519,6 +567,7 @@ class ApiService {
         return this.getItems({ lowStock: true })
     }
 }
+
 
 // Instância singleton do serviço
 const apiService = new ApiService()

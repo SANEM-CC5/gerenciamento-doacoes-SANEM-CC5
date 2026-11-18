@@ -256,7 +256,7 @@ export default function RegistrarRetiradaPage() {
                       >
                         <div><strong>{item.nome || item.descricao}</strong></div>
                         <div style={{ fontSize: '0.9rem', color: '#666' }}>
-                          Estoque: {item.quantidade} | Categoria: {item.categoria || 'N/A'}
+                          Estoque: {item.quantidade} | Categoria: {item.categoria || "N/A"}{item.tamanho ? ` | Tam: ${item.tamanho}` : ""}{item.estadoConservacao ? ` | Estado: ${item.estadoConservacao}` : ""}
                         </div>
                       </div>
                     ))

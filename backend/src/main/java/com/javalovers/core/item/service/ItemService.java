@@ -147,6 +147,7 @@ public class ItemService {
     private Specification<Item> generateSpecification(ItemFilterDTO itemFilterDTO) {
         Specification<Item> notDeletedSpecification = (root, query, criteriaBuilder) -> 
             criteriaBuilder.isNull(root.get("deletedAt"));
+            
         Specification<Item> searchSpecification = (root, query, criteriaBuilder) -> {
             if (itemFilterDTO.searchTerm() == null || itemFilterDTO.searchTerm().trim().isEmpty()) {
                 return criteriaBuilder.conjunction();
@@ -171,6 +172,17 @@ public class ItemService {
             return predicates;
         };
 
+        Specification<Item> categorySpecification = (root, query, criteriaBuilder) -> {
+            if (itemFilterDTO.categoryId() != null) {
+                return criteriaBuilder.equal(root.get("category").get("categoryId"), itemFilterDTO.categoryId());
+            }
+            if (hasValue(itemFilterDTO.category())) {
+                String catPattern = "%" + itemFilterDTO.category().trim().toLowerCase() + "%";
+                return criteriaBuilder.like(criteriaBuilder.lower(root.get("category").get("name")), catPattern);
+            }
+            return criteriaBuilder.conjunction();
+        };
+
         // RF19: somente itens com mínimo configurado e saldo <= mínimo
         Specification<Item> lowStockSpecification = (root, query, criteriaBuilder) -> {
             if (!Boolean.TRUE.equals(itemFilterDTO.lowStock())) {
@@ -185,19 +197,28 @@ public class ItemService {
         Specification<Item> attributeSpecification = (root, query, criteriaBuilder) -> {
             var predicates = criteriaBuilder.conjunction();
             if (hasValue(itemFilterDTO.size())) {
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("size"), itemFilterDTO.size()));
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("size")), "%" + itemFilterDTO.size().trim().toLowerCase() + "%"));
+            }
+            if (hasValue(itemFilterDTO.conservationState())) {
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("conservationState")), "%" + itemFilterDTO.conservationState().trim().toLowerCase() + "%"));
             }
             if (hasValue(itemFilterDTO.gender())) {
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("gender"), itemFilterDTO.gender()));
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("gender")), "%" + itemFilterDTO.gender().trim().toLowerCase() + "%"));
             }
             if (hasValue(itemFilterDTO.type())) {
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("type"), itemFilterDTO.type()));
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("type")), "%" + itemFilterDTO.type().trim().toLowerCase() + "%"));
             }
             if (hasValue(itemFilterDTO.conditionStatus())) {
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("conditionStatus"), itemFilterDTO.conditionStatus()));
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("conditionStatus")), "%" + itemFilterDTO.conditionStatus().trim().toLowerCase() + "%"));
             }
             if (hasValue(itemFilterDTO.location())) {
-                predicates = criteriaBuilder.and(predicates, criteriaBuilder.equal(root.get("location"), itemFilterDTO.location()));
+                predicates = criteriaBuilder.and(predicates,
+                        criteriaBuilder.like(criteriaBuilder.lower(root.get("location")), "%" + itemFilterDTO.location().trim().toLowerCase() + "%"));
             }
             return predicates;
         };
@@ -205,6 +226,7 @@ public class ItemService {
         return Specification.where(searchSpecification)
                 .and(quantitySpecification)
                 .and(lowStockSpecification)
+                .and(categorySpecification)
                 .and(attributeSpecification)
                 .and(notDeletedSpecification);
     }

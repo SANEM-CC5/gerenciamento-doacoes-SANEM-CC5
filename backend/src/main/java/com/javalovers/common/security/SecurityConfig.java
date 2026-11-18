@@ -71,6 +71,7 @@ public class SecurityConfig {
         configuration.setExposedHeaders(Arrays.asList(
                 "Authorization",
                 "Content-Type",
+                "Content-Disposition",
                 "X-Total-Count"
         ));
 

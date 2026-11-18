@@ -1,5 +1,6 @@
 package com.javalovers.core.appuser.domain.dto.request;
 
+import com.javalovers.core.appuser.domain.validation.PasswordPolicy;
 import com.javalovers.core.profile.domain.entity.Profile;
 import com.javalovers.core.status.Status;
 import jakarta.validation.constraints.Email;
@@ -23,8 +24,8 @@ public record AppUserFormDTO(
                 
                 @NotBlank(message = "Senha é obrigatória")
                 @Pattern(
-                    regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$",
-                    message = "A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial"
+                    regexp = PasswordPolicy.PASSWORD_REGEX,
+                    message = PasswordPolicy.PASSWORD_MESSAGE
                 )
                 String password,
                 

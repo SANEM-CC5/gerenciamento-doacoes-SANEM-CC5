@@ -8,7 +8,8 @@
 
 .pageContent {
   flex: 1;
-  margin-left: 220px;
+  margin-left: var(--sidebar-width, 220px);
+  transition: margin-left 0.25s cubic-bezier(0.4, 0, 0.2, 1), width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   padding: 32px 36px 48px;
   max-width: 1400px;
 
@@ -404,6 +405,68 @@
   margin-bottom: 28px;
 }
 
+
+.actionButtonsGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.exportPdfButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #E53935;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  height: fit-content;
+}
+
+.exportPdfButton:hover:not(:disabled) {
+  background: #D32F2F;
+  transform: translateY(-1px);
+}
+
+.exportPdfButton:disabled {
+  background: #EF9A9A;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.exportCsvButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1976D2;
+  color: #fff;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  height: fit-content;
+}
+
+.exportCsvButton:hover:not(:disabled) {
+  background: #1565C0;
+  transform: translateY(-1px);
+}
+
+.exportCsvButton:disabled {
+  background: #90CAF9;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .printButton {
   display: flex;
   align-items: center;
@@ -630,6 +693,9 @@
   .pageHeader:first-of-type,
   .relatoriosNav,
   .divider,
+  .actionButtonsGroup,
+  .exportPdfButton,
+  .exportCsvButton,
   .printButton {
     display: none !important;
   }
@@ -663,4 +729,28 @@
     page-break-inside: avoid;
     break-inside: avoid;
   }
+}
+
+
+.filtersContainer select {
+  width: 100%;
+  height: 42px;
+  padding: 6px 12px;
+  border: 2px solid var(--color-border, #ccc);
+  border-radius: 8px;
+  font-size: 0.95rem;
+  transition: border-color 0.3s;
+  box-sizing: border-box;
+  background: #fff;
+  cursor: pointer;
+}
+
+.filtersContainer select:focus {
+  outline: none;
+  border-color: var(--color-primary, #1976d2);
+}
+
+.filterGroupSelect {
+  flex: 1;
+  min-width: 150px;
 }

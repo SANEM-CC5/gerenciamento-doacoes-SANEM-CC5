@@ -17,8 +17,14 @@ public record ItemFormDTO(
         @PositiveOrZero(message = "O estoque mínimo não pode ser negativo.")
         Long minimumStock,
 
+        @JsonProperty("categoryId")
+        Long categoryId,
+
         @JsonProperty("size")
         String size,
+
+        @JsonProperty("conservationState")
+        String conservationState,
 
         @JsonProperty("gender")
         String gender,

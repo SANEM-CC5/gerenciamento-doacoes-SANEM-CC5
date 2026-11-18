@@ -1,16 +1,52 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: javalovers-postgres
+    profiles:
+      - local-db
+    restart: always
+    environment:
+      POSTGRES_DB: sanem
+      POSTGRES_USER: sanem
+      POSTGRES_PASSWORD: sanem123
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sanem -d sanem"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - javalovers-network
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: javalovers-mailpit
+    restart: always
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - javalovers-network
+
   backend:
     build: ./backend
     container_name: javalovers-backend
     restart: always
     ports:
       - "8080:8080"
-    # Banco: PostgreSQL hospedado no NeonDB.
+    # Banco: PostgreSQL (NeonDB via .env, ou PostgreSQL local com --profile local-db).
     # As variáveis (SPRING_DATASOURCE_URL/USERNAME/PASSWORD e SPRING_PROFILES_ACTIVE)
-    # vêm do .env (não versionado) e são passadas LITERALMENTE ao container.
-    # Ver .env.example.
+    # vêm do .env (não versionado). Ver .env.example.
     env_file:
-      - .env
+      - path: .env
+        required: false
+    environment:
+      MAIL_HOST: ${MAIL_HOST:-mailpit}
+      MAIL_PORT: ${MAIL_PORT:-1025}
+      APP_FRONTEND_URL: ${APP_FRONTEND_URL:-http://localhost:3000}
     networks:
       - javalovers-network
 
@@ -21,11 +57,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_URL: http://backend:8080/api
+      NEXT_PUBLIC_API_URL: http://localhost:8080/api
     depends_on:
       - backend
     networks:
       - javalovers-network
+
+volumes:
+  postgres_data:
 
 networks:
   javalovers-network:

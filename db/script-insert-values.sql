@@ -44,6 +44,15 @@ INSERT INTO beneficiary (full_name, cpf, phone, socioeconomic_data, beneficiary_
     ('Camila Vieira', '95844334078', '11999990000', 'Ajuda emergencial', 'PENDING', NULL, 10),
     ('Roberto Antunes', '58872974097', '11900001111', 'Renda superior ao limite', 'REJECTED', 3, 10);
 
+-- CATEGORIAS
+INSERT INTO category (name) VALUES
+    ('Roupas'),
+    ('Calçados'),
+    ('Alimentos'),
+    ('Higiene'),
+    ('Utensílios Domésticos'),
+    ('Cama, Mesa e Banho');
+
 -- ITENS
 INSERT INTO item (description, stock_quantity, tag_code) VALUES
     ('Arroz Branco 5kg', 120, 'ETQ-ARR-001'),

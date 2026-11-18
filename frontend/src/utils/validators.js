@@ -143,3 +143,67 @@ export const validatePhone = (phone) => {
   return { valid: true, cleaned };
 };
 
+export const PASSWORD_POLICY_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+export const PASSWORD_POLICY_MESSAGE =
+  "A senha deve ter no mínimo 8 caracteres, uma letra maiúscula, uma minúscula, um número e um caractere especial (@$!%*?&)";
+
+export const evaluatePasswordRules = (password = "") => {
+  const minLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecial = /[@$!%*?&]/.test(password);
+  const hasOnlyAllowedChars = /^[A-Za-z\d@$!%*?&]*$/.test(password);
+
+  return {
+    minLength,
+    hasUppercase,
+    hasLowercase,
+    hasNumber,
+    hasSpecial,
+    hasOnlyAllowedChars,
+    isValid:
+      minLength &&
+      hasUppercase &&
+      hasLowercase &&
+      hasNumber &&
+      hasSpecial &&
+      hasOnlyAllowedChars,
+  };
+};
+
+export const validateStrongPassword = (password) => {
+  if (!password || !password.trim()) {
+    return { valid: false, message: "A senha é obrigatória" };
+  }
+
+  const rules = evaluatePasswordRules(password);
+  if (!rules.hasOnlyAllowedChars) {
+    return {
+      valid: false,
+      message: "Use apenas letras, números e os caracteres especiais @$!%*?&",
+    };
+  }
+
+  if (!PASSWORD_POLICY_REGEX.test(password)) {
+    return { valid: false, message: PASSWORD_POLICY_MESSAGE };
+  }
+
+  return { valid: true };
+};
+
+export const translateProfileName = (name) => {
+  const nameLower = (name || "").toLowerCase();
+  if (nameLower.includes("admin") || nameLower.includes("administrator")) {
+    return "Administrador";
+  }
+  if (nameLower.includes("attendant") || nameLower.includes("atendente")) {
+    return "Atendente";
+  }
+  if (nameLower.includes("evaluator") || nameLower.includes("avaliador")) {
+    return "Avaliador";
+  }
+  return name || "Usuário";
+};

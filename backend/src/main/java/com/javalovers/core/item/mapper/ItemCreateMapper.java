@@ -1,11 +1,16 @@
 package com.javalovers.core.item.mapper;
 
+import com.javalovers.core.category.repository.CategoryRepository;
 import com.javalovers.core.item.domain.dto.request.ItemFormDTO;
 import com.javalovers.core.item.domain.entity.Item;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
+@RequiredArgsConstructor
 public class ItemCreateMapper {
+
+    private final CategoryRepository categoryRepository;
 
     public Item convert(ItemFormDTO itemFormDTO){
         Item item = new Item();
@@ -17,7 +22,14 @@ public class ItemCreateMapper {
         }
         item.setTagCode(tag);
         item.setMinimumStock(itemFormDTO.minimumStock());
+
+        if (itemFormDTO.categoryId() != null) {
+            categoryRepository.findById(itemFormDTO.categoryId())
+                    .ifPresent(item::setCategory);
+        }
+
         item.setSize(itemFormDTO.size());
+        item.setConservationState(itemFormDTO.conservationState());
         item.setGender(itemFormDTO.gender());
         item.setType(itemFormDTO.type());
         item.setConditionStatus(itemFormDTO.conditionStatus());

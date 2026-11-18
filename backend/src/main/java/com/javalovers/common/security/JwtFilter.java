@@ -2,6 +2,7 @@ package com.javalovers.common.security;
 
 import com.javalovers.core.appuser.domain.entity.AppUser;
 import com.javalovers.core.appuser.repository.AppUserRepository;
+import com.javalovers.core.status.Status;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,10 +43,10 @@ public class JwtFilter extends OncePerRequestFilter {
                 String login = jwtService.extractLogin(token);
                 System.out.println("Login extraído do token: " + login);
 
-                AppUser user = appUserRepository.findByLogin(login).orElse(null);
+                AppUser user = appUserRepository.findByLoginAndDeletedAtIsNull(login).orElse(null);
                 System.out.println("Usuário encontrado no banco: " + (user != null ? user.getLogin() : "NULL"));
 
-                if (user != null) {
+                if (user != null && user.getStatus() == Status.ACTIVE) {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(
                                     login, null, Collections.emptyList()

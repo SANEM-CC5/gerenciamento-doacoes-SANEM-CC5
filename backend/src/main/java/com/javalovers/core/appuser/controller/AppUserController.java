@@ -3,6 +3,7 @@ package com.javalovers.core.appuser.controller;
 import com.javalovers.common.utils.HttpUtils;
 import com.javalovers.core.appuser.domain.dto.request.AppUserFormDTO;
 import com.javalovers.core.appuser.domain.dto.request.AppUserUpdateDTO;
+import com.javalovers.core.appuser.domain.dto.request.ChangePasswordRequestDTO;
 import com.javalovers.core.appuser.domain.dto.response.AppUserDTO;
 import com.javalovers.core.appuser.domain.entity.AppUser;
 import com.javalovers.core.appuser.service.AppUserService;
@@ -16,6 +17,7 @@ import org.springframework.web.util.UriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,6 +25,19 @@ import java.util.List;
 public class AppUserController {
 
     private final AppUserService userService;
+
+    @GetMapping("/me")
+    public ResponseEntity<AppUserDTO> getCurrentUserProfile() {
+        return ResponseEntity.ok(userService.getCurrentUserProfile());
+    }
+
+    @PatchMapping("/me/password")
+    public ResponseEntity<Map<String, String>> changeCurrentUserPassword(
+            @RequestBody @Valid ChangePasswordRequestDTO request
+    ) {
+        userService.changeCurrentUserPassword(request);
+        return ResponseEntity.ok(Map.of("message", "Senha alterada com sucesso."));
+    }
 
     @GetMapping
     public ResponseEntity<Page<AppUserDTO>> listPaged(Pageable pageable) {

@@ -26,20 +26,28 @@ const toNullableNumber = (value) => {
 }
 
 export const mapItemToBackend = (frontendItem) => {
+    const size = frontendItem.tamanho ?? frontendItem.size
+    const conservationState = frontendItem.estadoConservacao ?? frontendItem.conservationState
+    const gender = frontendItem.genero ?? frontendItem.gender
+    const conditionStatus = frontendItem.conditionStatus ?? conservationState
+
     return {
         description: frontendItem.nome || frontendItem.descricao || "",
-        stockQuantity: frontendItem.quantidade || 0,
+        stockQuantity: Number(frontendItem.quantidade) || 0,
         tagCode: frontendItem.tagCode?.trim() ? frontendItem.tagCode.trim() : null,
         minimumStock: toNullableNumber(frontendItem.estoqueMinimo),
-        size: frontendItem.size || null,
-        gender: frontendItem.gender || null,
-        type: frontendItem.type || null,
-        conditionStatus: frontendItem.conditionStatus || null,
-        location: frontendItem.location || null
+        categoryId: frontendItem.categoriaId ? Number(frontendItem.categoriaId) : null,
+        size: size?.trim() ? size.trim() : null,
+        conservationState: conservationState?.trim() ? conservationState.trim() : null,
+        gender: gender?.trim() ? gender.trim() : null,
+        type: frontendItem.type?.trim() ? frontendItem.type.trim() : null,
+        conditionStatus: conditionStatus?.trim() ? conditionStatus.trim() : null,
+        location: frontendItem.location?.trim() ? frontendItem.location.trim() : null
     }
 }
 
 export const mapItemFromBackend = (backendItem) => {
+    const resolvedState = backendItem.conservationState || backendItem.conditionStatus || ""
     return {
         id: backendItem.itemId,
         nome: backendItem.description,
@@ -48,11 +56,16 @@ export const mapItemFromBackend = (backendItem) => {
         tagCode: backendItem.tagCode || null,
         estoqueMinimo: backendItem.minimumStock ?? null,
         estoqueBaixo: Boolean(backendItem.lowStock),
-        size: backendItem.size || '',
-        gender: backendItem.gender || '',
-        type: backendItem.type || '',
-        conditionStatus: backendItem.conditionStatus || '',
-        location: backendItem.location || ''
+        categoriaId: backendItem.category ? backendItem.category.categoryId : (backendItem.categoryId || null),
+        categoria: backendItem.category ? backendItem.category.name : (backendItem.categoryName || ""),
+        tamanho: backendItem.size || "",
+        estadoConservacao: resolvedState,
+        genero: backendItem.gender || "",
+        size: backendItem.size || "",
+        gender: backendItem.gender || "",
+        type: backendItem.type || "",
+        conditionStatus: backendItem.conditionStatus || resolvedState,
+        location: backendItem.location || ""
     }
 }
 
@@ -110,8 +123,6 @@ export const mapBeneficiaryToBackend = (frontendBeneficiary) => {
 }
 
 export const mapBeneficiaryFromBackend = (backendBeneficiary) => {
-
-
     return {
         id: backendBeneficiary.beneficiaryId,
         nomeCompleto: backendBeneficiary.fullName,

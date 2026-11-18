@@ -1,4 +1,5 @@
 "use client"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { usePathname } from "next/navigation"
@@ -14,6 +15,8 @@ import {
     FaUser,
     FaQuestionCircle,
     FaShoppingCart,
+    FaAngleDoubleLeft,
+    FaAngleDoubleRight,
     FaMapMarkerAlt,
     FaBullhorn
 } from "react-icons/fa"
@@ -31,8 +34,41 @@ const menuIcons = {
     Ajuda: <FaQuestionCircle />
 }
 
+const STORAGE_KEY = "sanem_sidebar_condensed"
+
 export default function Navigation() {
     const pathname = usePathname()
+    const [isCondensed, setIsCondensed] = useState(false)
+
+    const applySidebarDimensions = (condensed) => {
+        if (typeof document !== "undefined") {
+            document.documentElement.style.setProperty("--sidebar-width", condensed ? "76px" : "220px")
+            document.documentElement.style.setProperty("--sidebar-offset", condensed ? "96px" : "250px")
+        }
+    }
+
+    useEffect(() => {
+        try {
+            const saved = localStorage.getItem(STORAGE_KEY) === "true"
+            setIsCondensed(saved)
+            applySidebarDimensions(saved)
+        } catch {
+            applySidebarDimensions(false)
+        }
+    }, [])
+
+    const toggleSidebar = () => {
+        setIsCondensed((prev) => {
+            const next = !prev
+            try {
+                localStorage.setItem(STORAGE_KEY, String(next))
+            } catch {
+                // ignore storage errors
+            }
+            applySidebarDimensions(next)
+            return next
+        })
+    }
 
     const isActive = (path) => {
         if (path === "/home") {
@@ -42,101 +78,155 @@ export default function Navigation() {
     }
 
     return (
-        <aside className={styles.sidebar}>
-            <div className={styles.logoContainer}>
-                <Image
-                    src="/logo-sanem.svg"
-                    alt="Sanem"
-                    width={80}
-                    height={80}
-                />
-                <div className={styles.logoText}></div>
+        <aside className={`${styles.sidebar} ${isCondensed ? styles.condensed : ""}`}>
+            <div className={styles.sidebarHeader}>
+                <div className={styles.logoContainer}>
+                    <Image
+                        src="/logo-sanem.svg"
+                        alt="Sanem"
+                        width={isCondensed ? 42 : 76}
+                        height={isCondensed ? 42 : 76}
+                        className={styles.logoImage}
+                    />
+                    {!isCondensed && <div className={styles.logoText}></div>}
+                </div>
+                <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className={styles.toggleBtn}
+                    title={isCondensed ? "Expandir menu" : "Condensar menu"}
+                    aria-label={isCondensed ? "Expandir menu" : "Condensar menu"}
+                    aria-expanded={!isCondensed}
+                >
+                    {isCondensed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+                </button>
             </div>
-            <div className={styles.sectionTitle}>MENU</div>
-            <nav className={styles.menuSection} data-tour="nav-menu">
-                <Link
-                    href="/home"
-                    className={`${styles.menuItem} ${isActive("/home") ? styles.active : ""}`}
+            <div className={styles.scrollArea}>
+                <div className={styles.sectionTitle}>{!isCondensed ? "MENU" : ""}</div>
+                <nav className={styles.menuSection} data-tour="nav-menu">
+                    <Link
+                        href="/home"
+                        title="Home"
+                        className={`${styles.menuItem} ${isActive("/home") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Home}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Home</span>}
+                    </Link>
+                    <Link
+                        href="/estoque"
+                        title="Estoque"
+                        data-tour="nav-estoque"
+                        className={`${styles.menuItem} ${isActive("/estoque") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Estoque}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Estoque</span>}
+                    </Link>
+                    <Link
+                        href="/doacao/lista"
+                        title="Doações"
+                        data-tour="nav-doacoes"
+                        className={`${styles.menuItem} ${isActive("/doacao") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}><FaHandHoldingHeart /></span>
+                        {!isCondensed && <span className={styles.menuLabel}>Doações</span>}
+                    </Link>
+                    <Link
+                        href="/demandas"
+                        title="Demandas"
+                        data-tour="nav-demandas"
+                        className={`${styles.menuItem} ${isActive("/demandas") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}><FaBullhorn /></span>
+                        {!isCondensed && <span className={styles.menuLabel}>Demandas</span>}
+                    </Link>
+                    <Link
+                        href="/retirada"
+                        title="Retirada"
+                        data-tour="nav-retirada"
+                        className={`${styles.menuItem} ${isActive("/retirada") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Retirada}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Retirada</span>}
+                    </Link>
+                    <Link
+                        href="/cadastrodoador/lista"
+                        title="Doadores"
+                        data-tour="nav-doadores"
+                        className={`${styles.menuItem} ${isActive("/cadastrodoador") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Doadores}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Doadores</span>}
+                    </Link>
+                    <Link
+                        href="/cadastrobeneficiario/lista"
+                        title="Beneficiários"
+                        data-tour="nav-beneficiarios"
+                        className={`${styles.menuItem} ${isActive("/cadastrobeneficiario") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Beneficiários}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Beneficiários</span>}
+                    </Link>
+                    <Link
+                        href="/pontoscoleta/lista"
+                        title="Pontos de Coleta"
+                        className={`${styles.menuItem} ${isActive("/pontoscoleta") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}><FaMapMarkerAlt /></span>
+                        {!isCondensed && <span className={styles.menuLabel}>Pontos de Coleta</span>}
+                    </Link>
+                </nav>
+
+                <div className={styles.sectionTitle}>{!isCondensed ? "OTHERS" : ""}</div>
+                <nav className={styles.menuSection}>
+                    <Link
+                        href="/relatorios"
+                        title="Relatórios"
+                        className={`${styles.menuItem} ${isActive("/relatorios") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Relatórios}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Relatórios</span>}
+                    </Link>
+                    <Link
+                        href="/configuracoes"
+                        title="Configurações"
+                        className={`${styles.menuItem} ${isActive("/configuracoes") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Configurações}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Configurações</span>}
+                    </Link>
+                    <Link
+                        href="/usuarios"
+                        title="Usuários"
+                        className={`${styles.menuItem} ${isActive("/usuarios") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Usuários}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Usuários</span>}
+                    </Link>
+                    <Link
+                        href="/ajuda"
+                        title="Ajuda"
+                        data-tour="nav-ajuda"
+                        className={`${styles.menuItem} ${isActive("/ajuda") ? styles.active : ""}`}
+                    >
+                        <span className={styles.menuIcon}>{menuIcons.Ajuda}</span>
+                        {!isCondensed && <span className={styles.menuLabel}>Ajuda</span>}
+                    </Link>
+                </nav>
+            </div>
+
+            <div className={styles.sidebarFooter}>
+                <button
+                    type="button"
+                    onClick={toggleSidebar}
+                    className={styles.collapseFooterBtn}
+                    title={isCondensed ? "Expandir menu" : "Condensar menu"}
                 >
-                    {menuIcons.Home} Home
-                </Link>
-                <Link
-                    href="/estoque"
-                    data-tour="nav-estoque"
-                    className={`${styles.menuItem} ${isActive("/estoque") ? styles.active : ""}`}
-                >
-                    {menuIcons.Estoque} Estoque
-                </Link>
-                <Link
-                    href="/doacao/lista"
-                    data-tour="nav-doacoes"
-                    className={`${styles.menuItem} ${isActive("/doacao") ? styles.active : ""}`}
-                >
-                    <FaHandHoldingHeart /> Doações
-                </Link>
-                <Link
-                    href="/demandas"
-                    data-tour="nav-demandas"
-                    className={`${styles.menuItem} ${isActive("/demandas") ? styles.active : ""}`}
-                >
-                    <FaBullhorn /> Demandas
-                </Link>
-                <Link
-                    href="/retirada"
-                    data-tour="nav-retirada"
-                    className={`${styles.menuItem} ${isActive("/retirada") ? styles.active : ""}`}
-                >
-                    {menuIcons.Retirada} Retirada
-                </Link>
-                <Link
-                    href="/cadastrodoador/lista"
-                    data-tour="nav-doadores"
-                    className={`${styles.menuItem} ${isActive("/cadastrodoador") ? styles.active : ""}`}
-                >
-                    {menuIcons.Doadores} Doadores
-                </Link>
-                <Link
-                    href="/cadastrobeneficiario/lista"
-                    data-tour="nav-beneficiarios"
-                    className={`${styles.menuItem} ${isActive("/cadastrobeneficiario") ? styles.active : ""}`}
-                >
-                    {menuIcons.Beneficiários} Beneficiários
-                </Link>
-                <Link
-                    href="/pontoscoleta/lista"
-                    className={`${styles.menuItem} ${isActive("/pontoscoleta") ? styles.active : ""}`}
-                >
-                    <FaMapMarkerAlt /> Pontos de Coleta
-                </Link>
-            </nav>
-            <div className={styles.sectionTitle}>OTHERS</div>
-            <nav className={styles.menuSection}>
-                <Link
-                    href="/relatorios"
-                    className={`${styles.menuItem} ${isActive("/relatorios") ? styles.active : ""}`}
-                >
-                    {menuIcons.Relatórios} Relatórios
-                </Link>
-                <Link
-                    href="/configuracoes"
-                    className={`${styles.menuItem} ${isActive("/configuracoes") ? styles.active : ""}`}
-                >
-                    {menuIcons.Configurações} Configurações
-                </Link>
-                <Link
-                    href="/usuarios"
-                    className={`${styles.menuItem} ${isActive("/usuarios") ? styles.active : ""}`}
-                >
-                    {menuIcons.Usuários} Usuários
-                </Link>
-                <Link
-                    href="/ajuda"
-                    data-tour="nav-ajuda"
-                    className={`${styles.menuItem} ${isActive("/ajuda") ? styles.active : ""}`}
-                >
-                    {menuIcons.Ajuda} Ajuda
-                </Link>
-            </nav>
+                    <span className={styles.menuIcon}>
+                        {isCondensed ? <FaAngleDoubleRight /> : <FaAngleDoubleLeft />}
+                    </span>
+                    {!isCondensed && <span className={styles.menuLabel}>Recolher menu</span>}
+                </button>
+            </div>
         </aside>
     )
 }
